@@ -23,3 +23,12 @@ export function log(data: any) {
 export function getArrOfLen(length: number): number[] {
   return [...Array(length).keys()]
 }
+
+type SmallNumberTuple = [number]
+  | [number, number]
+  | [number, number, number]
+  | [number, number, number, number]
+
+export function anyInTupleIsPositiveOrZero(a: SmallNumberTuple): boolean {
+  return Boolean(a.find((n: number):boolean => n >= 0))
+}

@@ -7,6 +7,9 @@ import type {
 import {
   adjacentTerrainsIndexForTerrainIndexMap,
 } from "./values"
+import {
+  anyInTupleIsPositiveOrZero,
+} from "./utils"
 
 export function getDiceRoll(): number {
   const minimum: number = 1
@@ -39,7 +42,7 @@ export function getAdjacentAxisForAxis(axis: Axis): Axis[] {
 
       return acc
     }, [])
-  .filter((a: Axis): boolean => a[0] > -1 || a[1] > -1)
+  .filter(anyInTupleIsPositiveOrZero)
 }
 
 export function getAdjacentIntersectionsForAxis(axis: Axis): Intersection[] {
@@ -48,5 +51,15 @@ export function getAdjacentIntersectionsForAxis(axis: Axis): Intersection[] {
 
   return intersectionTerrains
     .map((terrain: number): Intersection => [terrain, terrainIndexA, terrainIndexB])
-    .filter((i: Intersection): boolean => i[0] > -1 || i[1] > -1 || i[2] > -1)
+    .filter(anyInTupleIsPositiveOrZero)
+}
+
+export function getAdjacentAxisForIntersection(intersection: Intersection): Axis[] {
+  const [terrainIndexA, terrainIndexB, terrainIndexC]: [number, number, number] = intersection
+
+  return [
+    [terrainIndexA, terrainIndexB],
+    [terrainIndexB, terrainIndexC],
+    [terrainIndexC, terrainIndexA],
+  ].filter(anyInTupleIsPositiveOrZero)
 }

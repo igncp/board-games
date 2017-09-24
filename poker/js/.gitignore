@@ -1,0 +1,4 @@
+build
+# this is recommended to be added but not important for this case
+flow-typed
+node_modules

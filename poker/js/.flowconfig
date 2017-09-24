@@ -1,9 +1,9 @@
 [ignore]
 build/**
-test/**
 
 [include]
 
 [libs]
+helpers/setupFlow.js
 
 [options]

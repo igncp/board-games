@@ -4,6 +4,9 @@ module.exports = {
     jest: true,
     node: true,
   },
+  globals: {
+    __TEST__: true,
+  },
   parser: "babel-eslint",
   plugins: [
     "flowtype",
@@ -20,7 +23,7 @@ module.exports = {
     "block-spacing": 2, // enforce consistent spacing inside single-line blocks
     "brace-style": 2, // enforce consistent brace style for blocks
     "callback-return": 0, // require return statements after callbacks
-    "camelcase": 2, // enforce camelcase naming convention
+    "camelcase": 0, // enforce camelcase naming convention
     "capitalized-comments": 0, // enforce or disallow capitalization of the first letter of a comment
     "class-methods-use-this": 2, // enforce that class methods utilize this
     "comma-dangle": [2, "always-multiline"], // require or disallow trailing commas
@@ -105,7 +108,7 @@ module.exports = {
     "no-extra-bind": 2, // disallow unnecessary calls to .bind()
     "no-extra-boolean-cast": 2, // disallow unnecessary boolean casts
     "no-extra-label": 2, // disallow unnecessary labels
-    "no-extra-parens": 2, // disallow unnecessary parentheses
+    "no-extra-parens": 0, // disallow unnecessary parentheses
     "no-extra-semi": 2, // disallow unnecessary semicolons
     "no-fallthrough": 2, // disallow fallthrough of case statements
     "no-floating-decimal": 2, // disallow leading or trailing decimal points in numeric literals
@@ -126,7 +129,7 @@ module.exports = {
     "no-lonely-if": 2, // disallow if statements as the only statement in else blocks
     "no-loop-func": 2, // disallow function declarations and expressions inside loop statements
     "no-magic-numbers": 0, // disallow magic numbers
-    "no-mixed-operators": 2, // disallow mixed binary operators
+    "no-mixed-operators": 0, // disallow mixed binary operators
     "no-mixed-requires": 2, // disallow require calls to be mixed with regular variable declarations
     "no-mixed-spaces-and-tabs": 2, // disallow mixed spaces and tabs for indentation
     "no-multi-spaces": 2, // disallow multiple spaces
@@ -176,7 +179,7 @@ module.exports = {
     "no-undef": 2, // disallow the use of undeclared variables unless mentioned in /*global */ comments
     "no-undef-init": 2, // disallow initializing variables to undefined
     "no-undefined": 2, // disallow the use of undefined as an identifier
-    "no-underscore-dangle": 2, // disallow dangling underscores in identifiers
+    "no-underscore-dangle": 0, // disallow dangling underscores in identifiers
     "no-unexpected-multiline": 2, // disallow confusing multiline expressions
     "no-unmodified-loop-condition": 2, // disallow unmodified loop conditions
     "no-unneeded-ternary": 2, // disallow ternary operators when simpler alternatives exist
@@ -214,7 +217,7 @@ module.exports = {
     "prefer-rest-params": 2, // require rest parameters instead of arguments
     "prefer-spread": 2, // require spread operators instead of .apply()
     "prefer-template": 2, // require template literals instead of string concatenation
-    "quote-props": [2, "consistent-as-needed"], // require quotes around object literal property names
+    "quote-props": 0, // require quotes around object literal property names
     "quotes": 2, // enforce the consistent use of either backticks, double, or single quotes
     "radix": 2, // enforce the consistent use of the radix argument when using parseInt()
     "require-await": 0, // disallow async functions which have no await expression
@@ -253,16 +256,16 @@ module.exports = {
     "flowtype/no-primitive-constructor-types": 2,
     "flowtype/no-weak-types": 0,
     "flowtype/object-type-delimiter": 0,
-    "flowtype/require-parameter-type": 2,
-    "flowtype/require-return-type": 2,
+    "flowtype/require-parameter-type": 0,
+    "flowtype/require-return-type": 0,
     "flowtype/require-valid-file-annotation": 2,
-    "flowtype/require-variable-type": 2,
+    "flowtype/require-variable-type": 0,
     "flowtype/semi": [2, "never"],
-    "flowtype/sort-keys": 0,
+    "flowtype/sort-keys": 2,
     "flowtype/space-after-type-colon": 0,
     "flowtype/space-before-generic-bracket": 0,
     "flowtype/space-before-type-colon": 0,
-    "flowtype/type-id-match": 0,
+    "flowtype/type-id-match": [2, "T_.*"],
     "flowtype/union-intersection-spacing": 2,
     "flowtype/use-flow-type": 2,
     "flowtype/valid-syntax": 2,

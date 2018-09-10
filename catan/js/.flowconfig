@@ -1,9 +1,11 @@
 [ignore]
-build/**
-test/**
+*./build/**
+*./test/**
 
 [include]
 
 [libs]
+flow-typed
+flowExtraDefinitions.js
 
 [options]

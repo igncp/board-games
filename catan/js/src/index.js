@@ -1,7 +1,7 @@
 // @flow
 
-import {
-  main,
-} from "./main"
+import {createGame} from "./game/Game"
 
-main()
+export const Game = {
+  createGame,
+}

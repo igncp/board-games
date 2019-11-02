@@ -1,5 +1,6 @@
+import { getGameCurrentPlayer } from "../helpers";
 import { GamePhase } from "../types";
-import { setupGame } from "../simulations";
+import { setupGame, playTurn } from "../simulations";
 import { INITIAL_CARDS_NUM, ALL_CARDS } from "../constants";
 
 describe("setupGame", () => {
@@ -19,7 +20,9 @@ describe("setupGame", () => {
     const totalCards =
       game.players.reduce((acc, p) => {
         return acc + p.cards.length;
-      }, 0) + game.board.discardPile.length;
+      }, 0) +
+      game.board.drawPile.length +
+      game.board.discardPile.length;
 
     expect(totalCards).toEqual(ALL_CARDS.length);
   });
@@ -30,5 +33,33 @@ describe("setupGame", () => {
 
     expect(() => setupGame({ playersNum: 11 })).toThrow();
     expect(() => setupGame({ playersNum: 1 })).toThrow();
+  });
+});
+
+describe("playTurn", () => {
+  it("has the expected result on first turn", () => {
+    const game = setupGame({ playersNum: 5 });
+    const newGame = playTurn(game)
+
+    // this is only true because of the number of players
+    expect(newGame.turn.player).not.toEqual(game.turn.player);
+    expect(newGame.board.drawPile.length).toEqual(game.board.drawPile.length);
+    expect(newGame.board.discardPile.length).toEqual(1);
+  });
+
+  it("has the expected result on first turn (if player had no cards)", () => {
+    const game = setupGame({ playersNum: 5 });
+    const player = getGameCurrentPlayer(game);
+
+    // if this is not valid in the future, set it up to have a card that can't
+    // be used
+    player.cards = [];
+
+    const newGame = playTurn(game)
+
+    // this is only true because of the number of players
+    expect(newGame.turn.player).not.toEqual(game.turn.player);
+    expect(newGame.board.drawPile.length).toEqual(game.board.drawPile.length - 1);
+    expect(newGame.board.discardPile.length).toEqual(1);
   });
 });

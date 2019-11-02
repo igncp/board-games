@@ -1,18 +1,30 @@
 {
-  "name": "ts",
-  "version": "1.0.0",
+  "name": "uno",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test-watch": "jest --watch"
+    "check": "npm-run-all -l lint test type-coverage",
+    "lint": "eslint src/ --ext ts",
+    "test": "jest --coverage",
+    "test-watch": "npm run test -- --watch",
+    "type-coverage": "type-coverage -p . --detail --strict"
   },
   "author": "",
   "license": "ISC",
+  "typeCoverage": {
+    "atLeast": 95
+  },
   "devDependencies": {
     "@types/jest": "^24.0.21",
+    "@typescript-eslint/eslint-plugin": "^2.6.0",
+    "@typescript-eslint/parser": "^2.6.0",
+    "eslint": "^6.6.0",
     "jest": "^24.9.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "^1.18.2",
     "ts-jest": "^24.1.0",
+    "type-coverage": "^2.3.0",
     "typescript": "^3.6.4"
   }
 }

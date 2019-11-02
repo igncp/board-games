@@ -1,11 +1,6 @@
 import { ALL_CARDS } from "../constants";
-import { Card, CardColor } from "../types";
-
-const isCard = (opts: Partial<Card>) => (card: Card): boolean => {
-  return Object.keys(opts).every((key: any) => {
-    return (card as any)[key] === (opts as any)[key];
-  });
-};
+import { isCard } from "../helpers";
+import { CardColor } from "../types";
 
 describe("ALL_CARDS", () => {
   it("has the expected cards", () => {

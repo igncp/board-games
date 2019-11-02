@@ -2,11 +2,6 @@ import { Card, CardType, CardColor } from "./types";
 
 export const INITIAL_CARDS_NUM = 7;
 
-// The deck consists of 108 cards: four each of "Wild" and "Wild Draw Four,"
-// and 25 each of four different colors (red, yellow, green, blue). Each color
-// consists of one zero, two each of 1 through 9, and two each of "Skip," "Draw
-// Two," and "Reverse." These last three types are known as "action cards."
-//
 export const ALL_CARDS: Card[] = (() => {
   const cards: Card[] = [];
   let lastCardId = 0;
@@ -22,7 +17,7 @@ export const ALL_CARDS: Card[] = (() => {
   };
 
   const addNCards = (semiCard: SemiCard, n: number): void => {
-    for (var i = 0; i < n; i += 1) {
+    for (let i = 0; i < n; i += 1) {
       addCard(semiCard);
     }
   };
@@ -36,7 +31,7 @@ export const ALL_CARDS: Card[] = (() => {
 
   addFourCards({
     color: CardColor.None,
-    type: CardType.Wild,
+    type: CardType.WildNormal,
     value: null
   });
 
@@ -54,7 +49,7 @@ export const ALL_CARDS: Card[] = (() => {
         value: 0
       });
 
-      for (var i = 1; i < 10; i++) {
+      for (let i = 1; i < 10; i++) {
         addTwoCards({
           color,
           type: CardType.Number,
@@ -82,3 +77,14 @@ export const ALL_CARDS: Card[] = (() => {
 
   return cards;
 })();
+
+type CardMap = { [k: string]: Card };
+
+export const CARD_ID_TO_CARD_MAP: CardMap = ALL_CARDS.reduce(
+  (acc: CardMap, card) => {
+    acc[card.id.toString()] = card;
+
+    return acc;
+  },
+  {}
+);

@@ -9,7 +9,7 @@ enum CardType {
   Number,
   Reverse,
   Skip,
-  Wild,
+  WildNormal,
   WildDrawFour
 }
 
@@ -29,12 +29,14 @@ interface Card {
 }
 
 interface Player {
-  id: number;
   cards: Card["id"][];
+  id: number;
+  points: number;
 }
 
 interface Board {
   discardPile: Card["id"][];
+  drawPile: Card["id"][];
 }
 
 interface GameConfig {

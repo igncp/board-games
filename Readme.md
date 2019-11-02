@@ -17,6 +17,7 @@ The steps that I have found to work best are (not all projects are following thi
 - Setup strong linter rules and automatic formatting
 - Write unit tests of particular functions and integration tests of flows
     - Run them in watch mode
+    - Run repeated tests (e.g. loops of 100) when tests involve random values
 - Use types
 - Modularize the app: decouple modules
 - Write TODOs

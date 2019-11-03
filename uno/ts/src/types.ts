@@ -1,5 +1,6 @@
 enum GamePhase {
   Play,
+  EndOfRound,
   Finish
 }
 

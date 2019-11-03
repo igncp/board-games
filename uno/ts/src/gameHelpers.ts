@@ -109,6 +109,41 @@ export const getOppositeDirection = (
     : GameDirection.Clockwise;
 };
 
+type EndGameRound = (game: Game) => Game;
+
+const endGameRound: EndGameRound = game => {
+  const newGame = { ...game };
+  newGame.players = newGame.players.map(p => ({ ...p }));
+  const winnerPlayer = newGame.players.find(p => p.cards.length === 0);
+
+  if (!winnerPlayer) {
+    throw new Error("No player with zero cards found");
+  }
+
+  const restOfPlayers = newGame.players.filter(p => p.id !== winnerPlayer.id);
+  const newPoints = restOfPlayers.reduce((acc, player) => {
+    return (
+      acc +
+      player.cards.reduce((acc2, cardId) => {
+        const card = CARD_ID_TO_CARD_MAP[cardId]!;
+
+        if (card.type === CardType.Number) {
+          return acc2 + card.value!;
+        }
+
+        return acc2;
+      }, 0)
+    );
+  }, 0);
+
+  winnerPlayer.points += newPoints;
+
+  newGame.phase =
+    winnerPlayer.points >= 500 ? GamePhase.Finish : GamePhase.EndOfRound;
+
+  return newGame;
+};
+
 type OnDeclareNextColor = (game: Game) => CardColor;
 
 type ApplyEffectOfCardIntoGame = (o: {
@@ -117,13 +152,15 @@ type ApplyEffectOfCardIntoGame = (o: {
   onDeclareNextColor: OnDeclareNextColor;
 }) => Game;
 
-export const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
+const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
   game,
   onDeclareNextColor,
   playedCard: cardId
 }) => {
   const newGame = { ...game };
+  newGame.board = { ...newGame.board };
   const card = typeof cardId === "number" ? CARD_ID_TO_CARD_MAP[cardId] : null;
+  const originalPlayerId = newGame.turn.player;
 
   const updateTurn = (positions?: number) => {
     const playersIds = newGame.players.map(p => p.id);
@@ -131,7 +168,12 @@ export const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
     const { direction } = newGame;
     newGame.turn = {
       ...newGame.turn,
-      player: getNextPlayer({ playersIds, fromPlayerId, direction, positions })
+      player: getNextPlayer({
+        playersIds,
+        fromPlayerId,
+        direction,
+        positions
+      })
     };
   };
 
@@ -179,6 +221,12 @@ export const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
     (card.type === CardType.WildNormal || card.type === CardType.WildDrawFour)
       ? onDeclareNextColor(game)
       : null;
+
+  if (
+    newGame.players.find(p => p.id === originalPlayerId)!.cards.length === 0
+  ) {
+    return endGameRound(newGame);
+  }
 
   return newGame;
 };
@@ -308,3 +356,14 @@ export const playTurn: PlayTurn = ({
     playedCard
   });
 };
+
+export const _test: {
+  applyEffectOfCardIntoGame?: ApplyEffectOfCardIntoGame;
+  endGameRound?: EndGameRound;
+} = {};
+
+// istanbul ignore else
+if (process.env.NODE_ENV === "test") {
+  _test.applyEffectOfCardIntoGame = applyEffectOfCardIntoGame;
+  _test.endGameRound = endGameRound;
+}

@@ -1,17 +1,20 @@
 import {
-  applyEffectOfCardIntoGame,
   createGame,
   getNextPlayer,
   getOppositeDirection,
   getPossibleCardsToPlay,
-  isCard
+  isCard,
+  _test as helpersTest
 } from "../gameHelpers";
-import { getShuffledArray, _test } from "../utils";
-import { CardType, CardColor, GameDirection } from "../types";
+import { getShuffledArray, _test as utilsTest } from "../utils";
+import { CardType, CardColor, GameDirection, GamePhase } from "../types";
 import { ALL_CARDS } from "../constants";
 import { runTestNTimes } from "../testUtils";
 
-const getRandomItem = _test.getRandomItem!;
+const getRandomItem = utilsTest.getRandomItem!;
+
+const applyEffectOfCardIntoGame = helpersTest.applyEffectOfCardIntoGame!;
+const endGameRound = helpersTest.endGameRound!;
 
 describe("getNextPlayer", () => {
   it("returns the expected value", () => {
@@ -178,7 +181,37 @@ describe("applyEffectOfCardIntoGame", () => {
         playedCard: cardWild!.id
       });
 
+      expect(game.board.nextColorFromWildCard).toEqual(null);
       expect(newGame.board.nextColorFromWildCard).toEqual(color);
     })
   );
+});
+
+describe("endGameRound", () => {
+  it("sets the expected values when game does not finish", () => {
+    const game = createGame({ playersNum: 10 });
+    game.players[0]!.cards = [];
+    const newGame = endGameRound(game);
+
+    expect(game.phase).not.toEqual(GamePhase.EndOfRound);
+    expect(newGame.phase).toEqual(GamePhase.EndOfRound);
+  });
+
+  it("sets the expected values when game finishes", () => {
+    const game = createGame({ playersNum: 10 });
+
+    game.players[0]!.cards = [];
+    game.players[0]!.points = 499;
+
+    const newGame = endGameRound(game);
+
+    expect(game.phase).not.toEqual(GamePhase.EndOfRound);
+    expect(newGame.phase).toEqual(GamePhase.Finish);
+  });
+
+  it("throws when no winner player", () => {
+    const game = createGame({ playersNum: 10 });
+
+    expect(() => endGameRound(game)).toThrow();
+  });
 });

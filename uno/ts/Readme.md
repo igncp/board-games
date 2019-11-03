@@ -15,6 +15,7 @@
 ### Features
 
 - Counting points
+- Actions depending on the first card on discard pile
 - Penalties
     - Including challenging with reviewing cards
 - Saying UNO

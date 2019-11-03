@@ -1,18 +1,55 @@
 import {
-  getLeftPlayer,
+  getNextPlayer,
   getPossibleCardsToPlay,
-  getRandomItem,
-  getShuffledArray,
-  isCard
-} from "../helpers";
-import { CardType, CardColor } from "../types";
+  isCard,
+  getOppositeDirection
+} from "../gameHelpers";
+import { getRandomItem, getShuffledArray } from "../utils";
+import { CardType, CardColor, GameDirection } from "../types";
 import { ALL_CARDS } from "../constants";
 
-describe("getLeftPlayer", () => {
+describe("getNextPlayer", () => {
   it("returns the expected value", () => {
-    expect(getLeftPlayer([3, 4, 5], 4)).toEqual(3);
-    expect(getLeftPlayer([3, 4, 5], 3)).toEqual(5);
-    expect(getLeftPlayer([3, 4, 5], 5)).toEqual(4);
+    expect(
+      getNextPlayer({
+        playersIds: [3, 4, 5],
+        fromPlayerId: 4,
+        direction: GameDirection.Clockwise
+      })
+    ).toEqual(3);
+    expect(
+      getNextPlayer({
+        playersIds: [3, 4, 5],
+        fromPlayerId: 3,
+        direction: GameDirection.Clockwise
+      })
+    ).toEqual(5);
+    expect(
+      getNextPlayer({
+        playersIds: [3, 4, 5],
+        fromPlayerId: 5,
+        direction: GameDirection.Clockwise
+      })
+    ).toEqual(4);
+    expect(
+      getNextPlayer({
+        playersIds: [3, 4, 5],
+        fromPlayerId: 5,
+        positions: 2,
+        direction: GameDirection.Counterclockwise
+      })
+    ).toEqual(4);
+  });
+});
+
+describe("getOppositeDirection", () => {
+  it("returns the expected values", () => {
+    expect(getOppositeDirection(GameDirection.Counterclockwise)).toEqual(
+      GameDirection.Clockwise
+    );
+    expect(getOppositeDirection(GameDirection.Clockwise)).toEqual(
+      GameDirection.Counterclockwise
+    );
   });
 });
 
@@ -51,7 +88,7 @@ describe("getPossibleCardsToPlay", () => {
   });
 
   it("returns expected cards for numbers", () => {
-    const card3Green  = ALL_CARDS.find(
+    const card3Green = ALL_CARDS.find(
       isCard({ type: CardType.Number, color: CardColor.Green, value: 3 })
     );
     const card4Green = ALL_CARDS.find(
@@ -66,11 +103,11 @@ describe("getPossibleCardsToPlay", () => {
         cardOnDiscardPile: card4Green!.id,
         cardsOnHand: [card3Green!.id, card5Green!.id]
       })
-    ).toEqual([card5Green!.id]);
+    ).toEqual([card3Green!.id, card5Green!.id]);
   });
 
   it("returns expected cards for symbols and colors", () => {
-    const cardGreenReverse  = ALL_CARDS.find(
+    const cardGreenReverse = ALL_CARDS.find(
       isCard({ type: CardType.Reverse, color: CardColor.Green })
     );
     const cardYellowReverse = ALL_CARDS.find(
@@ -86,7 +123,11 @@ describe("getPossibleCardsToPlay", () => {
     expect(
       getPossibleCardsToPlay({
         cardOnDiscardPile: cardGreenReverse!.id,
-        cardsOnHand: [cardYellowReverse!.id, cardGreenSkip!.id, cardYellowSkip!.id]
+        cardsOnHand: [
+          cardYellowReverse!.id,
+          cardGreenSkip!.id,
+          cardYellowSkip!.id
+        ]
       })
     ).toEqual([cardYellowReverse!.id, cardGreenSkip!.id]);
   });

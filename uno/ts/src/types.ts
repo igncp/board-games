@@ -1,7 +1,11 @@
 enum GamePhase {
-  Setup,
   Play,
   Finish
+}
+
+enum GameDirection {
+  Clockwise,
+  Counterclockwise
 }
 
 enum CardType {
@@ -39,10 +43,6 @@ interface Board {
   drawPile: Card["id"][];
 }
 
-interface GameConfig {
-  playersNum: number;
-}
-
 interface Turn {
   player: Player["id"];
 }
@@ -50,6 +50,7 @@ interface Turn {
 interface Game {
   board: Board;
   dealer: Player["id"];
+  direction: GameDirection;
   phase: GamePhase;
   players: Player[];
   turn: Turn;
@@ -61,7 +62,7 @@ export {
   CardColor,
   CardType,
   Game,
-  GameConfig,
+  GameDirection,
   GamePhase,
   Player
 };

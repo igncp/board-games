@@ -4,8 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "check": "npm-run-all -l lint test type-coverage",
+    "build": "rm -rf lib && tsc --build tsbuild.json",
+    "check": "npm-run-all -l lint test type-coverage build prettier:check",
     "lint": "eslint src/ --ext ts",
+    "prettier:check": "npm run prettier:run -- -c",
+    "prettier:fix": "npm run prettier:run -- --write",
+    "prettier:run": "prettier 'src/**/*.ts'",
     "test": "jest --coverage",
     "test-watch": "npm run test -- --watch",
     "type-coverage": "type-coverage -p . --detail --strict"

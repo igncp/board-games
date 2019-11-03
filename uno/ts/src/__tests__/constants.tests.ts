@@ -1,5 +1,5 @@
 import { ALL_CARDS } from "../constants";
-import { isCard } from "../helpers";
+import { isCard } from "../gameHelpers";
 import { CardColor } from "../types";
 
 describe("ALL_CARDS", () => {

@@ -6,6 +6,25 @@
 
 - Patterns:
     - Data-Driven
-    - FP
+    - Functional Programming
     - Types where possible, unit / integration tests in rest
     - types, helpers, constants, simulations (random)
+
+## TODO
+
+### Features
+
+- Counting points
+- Penalties
+    - Including challenging with reviewing cards
+- Saying UNO
+- House rules (plugins or config):
+    - Progressive Uno
+    - Seven-O
+    - Jump-In
+
+### Infra
+
+- Different builds
+- Minimize
+- More unit tests (coverage is already good)

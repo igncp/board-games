@@ -41,6 +41,7 @@ interface Player {
 interface Board {
   discardPile: Card["id"][];
   drawPile: Card["id"][];
+  nextColorFromWildCard: CardColor | null;
 }
 
 interface Turn {

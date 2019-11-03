@@ -3,9 +3,11 @@
  * data types, and not related to the game business logic.
  */
 
-export const getRandomItem = <A extends unknown>(
+type GetRandomItem = <A extends unknown>(
   items: A[]
-): { index: number; item: A; newItems: A[] } => {
+) => { index: number; item: A; newItems: A[] };
+
+export const getRandomItem: GetRandomItem = items => {
   const index = Math.floor(Math.random() * items.length);
   const item = items[index];
   const newItems = items.slice(0);
@@ -43,3 +45,12 @@ export const extractArrayNItemsOrLess = <A extends unknown>(
 
   return { items, newArray };
 };
+
+export const _test: {
+  getRandomItem?: GetRandomItem;
+} = {};
+
+// istanbul ignore else
+if (process.env.NODE_ENV === "test") {
+  _test.getRandomItem = getRandomItem;
+}

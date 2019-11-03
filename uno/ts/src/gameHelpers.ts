@@ -1,10 +1,11 @@
 import {
-  Player,
   Card,
+  CardColor,
   CardType,
   Game,
+  GameDirection,
   GamePhase,
-  GameDirection
+  Player
 } from "./types";
 import { getShuffledArray, extractArrayNItemsOrLess } from "./utils";
 import { ALL_CARDS, CARD_ID_TO_CARD_MAP, INITIAL_CARDS_NUM } from "./constants";
@@ -108,12 +109,21 @@ export const getOppositeDirection = (
     : GameDirection.Clockwise;
 };
 
-export const applyEffectOfCardIntoGame = (
-  cardId: Card["id"] | null,
-  game: Game
-): Game => {
+type OnDeclareNextColor = (game: Game) => CardColor;
+
+type ApplyEffectOfCardIntoGame = (o: {
+  game: Game;
+  playedCard: Card["id"] | null;
+  onDeclareNextColor: OnDeclareNextColor;
+}) => Game;
+
+export const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
+  game,
+  onDeclareNextColor,
+  playedCard: cardId
+}) => {
   const newGame = { ...game };
-  const card = cardId ? CARD_ID_TO_CARD_MAP[cardId] : null;
+  const card = typeof cardId === "number" ? CARD_ID_TO_CARD_MAP[cardId] : null;
 
   const updateTurn = (positions?: number) => {
     const playersIds = newGame.players.map(p => p.id);
@@ -136,12 +146,12 @@ export const applyEffectOfCardIntoGame = (
     updateTurn();
   }
 
-  if (card && card.type === CardType.DrawTwo) {
+  const drawNCards = (n: number) => {
     const playerId = newGame.turn.player;
     const { board } = newGame;
     const { items: cards, newArray: newDrawPile } = extractArrayNItemsOrLess(
       board.drawPile,
-      2
+      n
     );
 
     board.drawPile = newDrawPile;
@@ -153,7 +163,22 @@ export const applyEffectOfCardIntoGame = (
           }
         : p
     );
+  };
+
+  if (card) {
+    if (card.type === CardType.DrawTwo) {
+      drawNCards(2);
+    } else if (card.type === CardType.WildDrawFour) {
+      drawNCards(4);
+      updateTurn();
+    }
   }
+
+  newGame.board.nextColorFromWildCard =
+    card &&
+    (card.type === CardType.WildNormal || card.type === CardType.WildDrawFour)
+      ? onDeclareNextColor(game)
+      : null;
 
   return newGame;
 };
@@ -204,8 +229,82 @@ export const createGame: CreateGame = config => {
       })
     },
     board: {
+      discardPile,
       drawPile: deckIds,
-      discardPile
+      nextColorFromWildCard: null
     }
   };
+};
+
+type OnChoosePlayedCard = (opts: {
+  game: Game;
+  possibleCards: Card["id"][];
+}) => Card["id"] | null;
+
+type PlayTurn = (o: {
+  game: Game;
+  onChoosePlayedCard: OnChoosePlayedCard;
+  onDeclareNextColor: OnDeclareNextColor;
+}) => Game;
+
+export const playTurn: PlayTurn = ({
+  game,
+  onChoosePlayedCard,
+  onDeclareNextColor
+}) => {
+  const newGame = {
+    ...game,
+    board: { ...game.board, drawPile: game.board.drawPile.slice(0) }
+  };
+
+  const { player: playerId } = newGame.turn;
+
+  const { discardPile } = game.board;
+  const cardOnDiscardPile: Card["id"] = discardPile[discardPile.length - 1]!;
+
+  let possibleCards = getPossibleCardsToPlay({
+    cardOnDiscardPile,
+    cardsOnHand: newGame.players.find(p => p.id === playerId)!.cards
+  });
+
+  if (!possibleCards.length && newGame.board.drawPile.length) {
+    const drawnCard = newGame.board.drawPile.pop()!;
+
+    newGame.players.map(p => {
+      return p.id === playerId
+        ? {
+            ...p,
+            cards: p.cards.concat([drawnCard])
+          }
+        : p;
+    });
+
+    possibleCards = getPossibleCardsToPlay({
+      cardOnDiscardPile,
+      cardsOnHand: [drawnCard]
+    });
+  }
+
+  let playedCard: Card["id"] | null = null;
+
+  if (possibleCards.length) {
+    playedCard = onChoosePlayedCard({ game, possibleCards });
+
+    newGame.board.discardPile = newGame.board.discardPile.concat([playedCard!]);
+
+    newGame.players.map(p => {
+      return p.id === playerId
+        ? {
+            ...p,
+            cards: p.cards.filter(c => c !== playedCard)
+          }
+        : p;
+    });
+  }
+
+  return applyEffectOfCardIntoGame({
+    game: newGame,
+    onDeclareNextColor,
+    playedCard
+  });
 };

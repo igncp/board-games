@@ -2,25 +2,27 @@
   "name": "uno",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "private": true,
   "scripts": {
     "build": "rm -rf lib && tsc --build tsbuild.json",
     "check": "npm-run-all -l lint test type-coverage build prettier:check",
     "lint": "eslint src/ --ext ts",
     "prettier:check": "npm run prettier:run -- -c",
     "prettier:fix": "npm run prettier:run -- --write",
-    "prettier:run": "prettier 'src/**/*.ts'",
+    "prettier:run": "prettier 'src/**/*.ts' .eslintrc.js",
     "test": "jest --coverage",
     "test-watch": "npm run test -- --watch",
     "type-coverage": "type-coverage -p . --detail --strict"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "typeCoverage": {
-    "atLeast": 95
+    "atLeast": 100
   },
   "devDependencies": {
     "@types/jest": "^24.0.21",
+    "@types/node": "^12.12.5",
     "@typescript-eslint/eslint-plugin": "^2.6.0",
     "@typescript-eslint/parser": "^2.6.0",
     "eslint": "^6.6.0",

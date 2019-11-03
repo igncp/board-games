@@ -1,20 +1,24 @@
 import {
+  applyEffectOfCardIntoGame,
+  createGame,
   getNextPlayer,
+  getOppositeDirection,
   getPossibleCardsToPlay,
-  isCard,
-  getOppositeDirection
+  isCard
 } from "../gameHelpers";
-import { getRandomItem, getShuffledArray } from "../utils";
+import { getShuffledArray, _test } from "../utils";
 import { CardType, CardColor, GameDirection } from "../types";
 import { ALL_CARDS } from "../constants";
+import { runTestNTimes } from "../testUtils";
+
+const getRandomItem = _test.getRandomItem!;
 
 describe("getNextPlayer", () => {
   it("returns the expected value", () => {
     expect(
       getNextPlayer({
         playersIds: [3, 4, 5],
-        fromPlayerId: 4,
-        direction: GameDirection.Clockwise
+        fromPlayerId: 4
       })
     ).toEqual(3);
     expect(
@@ -131,4 +135,50 @@ describe("getPossibleCardsToPlay", () => {
       })
     ).toEqual([cardYellowReverse!.id, cardGreenSkip!.id]);
   });
+});
+
+describe("applyEffectOfCardIntoGame", () => {
+  it("sets the next color on the board on number", () => {
+    const cardGreen2 = ALL_CARDS.find(
+      isCard({ type: CardType.Number, color: CardColor.Green, value: 2 })
+    );
+    const game = createGame({ playersNum: 5 });
+
+    expect(game.board.nextColorFromWildCard).toEqual(null);
+
+    const newGame = applyEffectOfCardIntoGame({
+      game,
+      onDeclareNextColor: () => CardColor.Green,
+      playedCard: cardGreen2!.id
+    });
+
+    expect(newGame.board.nextColorFromWildCard).toEqual(null);
+  });
+
+  it(
+    "sets the next color on the board on wild",
+    runTestNTimes(100, () => {
+      const { item: color } = getRandomItem([
+        CardColor.Green,
+        CardColor.Yellow,
+        CardColor.Blue
+      ]);
+      const { item: cardType } = getRandomItem([
+        CardType.WildNormal,
+        CardType.WildDrawFour
+      ]);
+      const cardWild = ALL_CARDS.find(isCard({ type: cardType }));
+      const game = createGame({ playersNum: 5 });
+
+      expect(game.board.nextColorFromWildCard).toEqual(null);
+
+      const newGame = applyEffectOfCardIntoGame({
+        game,
+        onDeclareNextColor: () => color,
+        playedCard: cardWild!.id
+      });
+
+      expect(newGame.board.nextColorFromWildCard).toEqual(color);
+    })
+  );
 });

@@ -1,29 +1,29 @@
 enum GamePhase {
-  Play,
-  EndOfRound,
-  Finish
+  Play = "play",
+  EndOfRound = "endOfRound",
+  Finish = "finish"
 }
 
 enum GameDirection {
-  Clockwise,
-  Counterclockwise
+  Clockwise = "clockwise",
+  Counterclockwise = "counterclockwise"
 }
 
 enum CardType {
-  DrawTwo,
-  Number,
-  Reverse,
-  Skip,
-  WildNormal,
-  WildDrawFour
+  DrawTwo = "drawTwo",
+  Number = "number",
+  Reverse = "reverse",
+  Skip = "skip",
+  WildNormal = "wildNormal",
+  WildDrawFour = "wildDrawFour"
 }
 
 enum CardColor {
-  Blue,
-  Green,
-  Red,
-  Yellow,
-  None
+  Blue = "blue",
+  Green = "green",
+  Red = "red",
+  Yellow = "yellow",
+  None = "none"
 }
 
 interface Card {

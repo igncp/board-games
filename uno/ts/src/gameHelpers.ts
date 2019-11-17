@@ -109,6 +109,29 @@ export const getOppositeDirection = (
     : GameDirection.Clockwise;
 };
 
+type GetCardPoints = (cardId: Card["id"]) => number;
+
+const getCardPoints: GetCardPoints = cardId => {
+  const card = CARD_ID_TO_CARD_MAP[cardId]!;
+
+  switch (card.type) {
+    case CardType.Number:
+      return card.value!;
+
+    case CardType.Skip:
+    case CardType.Reverse:
+    case CardType.DrawTwo:
+      return 20;
+
+    case CardType.WildDrawFour:
+    case CardType.WildNormal:
+      return 50;
+
+    default:
+      return 0;
+  }
+};
+
 type EndGameRound = (game: Game) => Game;
 
 const endGameRound: EndGameRound = game => {
@@ -125,13 +148,7 @@ const endGameRound: EndGameRound = game => {
     return (
       acc +
       player.cards.reduce((acc2, cardId) => {
-        const card = CARD_ID_TO_CARD_MAP[cardId]!;
-
-        if (card.type === CardType.Number) {
-          return acc2 + card.value!;
-        }
-
-        return acc2;
+        return acc2 + getCardPoints(cardId);
       }, 0)
     );
   }, 0);
@@ -182,8 +199,12 @@ const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
   } else if (card.type === CardType.Skip) {
     updateTurn(2);
   } else if (card.type === CardType.Reverse) {
-    newGame.direction = getOppositeDirection(newGame.direction);
-    updateTurn();
+    if (newGame.players.length > 2) {
+      newGame.direction = getOppositeDirection(newGame.direction);
+      updateTurn();
+    } else {
+      updateTurn(2);
+    }
   } else {
     updateTurn();
   }
@@ -360,10 +381,12 @@ export const playTurn: PlayTurn = ({
 export const _test: {
   applyEffectOfCardIntoGame?: ApplyEffectOfCardIntoGame;
   endGameRound?: EndGameRound;
+  getCardPoints?: GetCardPoints;
 } = {};
 
 // istanbul ignore else
 if (process.env.NODE_ENV === "test") {
   _test.applyEffectOfCardIntoGame = applyEffectOfCardIntoGame;
   _test.endGameRound = endGameRound;
+  _test.getCardPoints = getCardPoints;
 }

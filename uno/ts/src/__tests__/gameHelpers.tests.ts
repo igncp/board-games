@@ -15,6 +15,7 @@ const getRandomItem = utilsTest.getRandomItem!;
 
 const applyEffectOfCardIntoGame = helpersTest.applyEffectOfCardIntoGame!;
 const endGameRound = helpersTest.endGameRound!;
+const getCardPoints = helpersTest.getCardPoints!;
 
 describe("getNextPlayer", () => {
   it("returns the expected value", () => {
@@ -185,11 +186,30 @@ describe("applyEffectOfCardIntoGame", () => {
       expect(newGame.board.nextColorFromWildCard).toEqual(color);
     })
   );
+
+  it(
+    "correctly uses reverse when two players",
+    runTestNTimes(100, () => {
+      const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }));
+      const game = createGame({ playersNum: 2 });
+      game.turn.player = 0;
+
+      expect(game.turn.player).toEqual(0);
+
+      const newGame = applyEffectOfCardIntoGame({
+        game,
+        onDeclareNextColor: () => CardColor.Blue,
+        playedCard: cardReverse!.id
+      });
+
+      expect(newGame.turn.player).toEqual(0);
+    })
+  );
 });
 
 describe("endGameRound", () => {
   it("sets the expected values when game does not finish", () => {
-    const game = createGame({ playersNum: 10 });
+    const game = createGame({ playersNum: 3 });
     game.players[0]!.cards = [];
     const newGame = endGameRound(game);
 
@@ -213,5 +233,31 @@ describe("endGameRound", () => {
     const game = createGame({ playersNum: 10 });
 
     expect(() => endGameRound(game)).toThrow();
+  });
+});
+
+describe("getCardPoints", () => {
+  it("returns the expected values", () => {
+    const card1 = ALL_CARDS.find(isCard({ type: CardType.Number, value: 1 }))!;
+    const card3 = ALL_CARDS.find(isCard({ type: CardType.Number, value: 3 }))!;
+    const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }))!;
+    const cardSkip = ALL_CARDS.find(isCard({ type: CardType.Skip }))!;
+    const cardDrawTwo = ALL_CARDS.find(isCard({ type: CardType.DrawTwo }))!;
+    const cardWildNormal = ALL_CARDS.find(
+      isCard({ type: CardType.WildNormal })
+    )!;
+    const cardWildDrawFour = ALL_CARDS.find(
+      isCard({ type: CardType.WildDrawFour })
+    )!;
+
+    expect(getCardPoints(card1.id)).toEqual(1);
+    expect(getCardPoints(card3.id)).toEqual(3);
+
+    expect(getCardPoints(cardReverse.id)).toEqual(20);
+    expect(getCardPoints(cardDrawTwo.id)).toEqual(20);
+    expect(getCardPoints(cardSkip.id)).toEqual(20);
+
+    expect(getCardPoints(cardWildNormal.id)).toEqual(50);
+    expect(getCardPoints(cardWildDrawFour.id)).toEqual(50);
   });
 });

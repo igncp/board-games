@@ -8,13 +8,11 @@
     - Data-Driven
     - Functional Programming
     - Types where possible, unit / integration tests in rest
-    - types, helpers, constants, simulations (random)
 
 ## TODO
 
 ### Features
 
-- Counting points
 - Actions depending on the first card on discard pile
 - Penalties
     - Including challenging with reviewing cards
@@ -26,6 +24,8 @@
 
 ### Infra
 
-- Different builds
+- Documentation: docsify installed
+- Different builds: organize scripts
 - Minimize
 - More unit tests (coverage is already good)
+- Add benchmarks

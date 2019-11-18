@@ -7,7 +7,11 @@ import {
   GamePhase,
   Player
 } from "./types";
-import { getShuffledArray, extractArrayNItemsOrLess } from "./utils";
+import {
+  getShuffledArray,
+  extractArrayNItemsOrLess,
+  getRandomItem
+} from "./utils";
 import { ALL_CARDS, CARD_ID_TO_CARD_MAP, INITIAL_CARDS_NUM } from "./constants";
 
 type GetNextPlayer = (opts: {
@@ -17,7 +21,7 @@ type GetNextPlayer = (opts: {
   positions?: number;
 }) => Player["id"];
 
-export const getNextPlayer: GetNextPlayer = ({
+const getNextPlayer: GetNextPlayer = ({
   direction = GameDirection.Clockwise,
   fromPlayerId,
   playersIds,
@@ -39,7 +43,7 @@ export const getNextPlayer: GetNextPlayer = ({
   return playersIds[pos];
 };
 
-export const isCard = (opts: Partial<Card>) => (card: Card): boolean => {
+const isCard = (opts: Partial<Card>) => (card: Card): boolean => {
   return Object.keys(opts).every((key: string) => {
     return card[key as keyof Card] === opts[key as keyof Card];
   });
@@ -50,7 +54,7 @@ type GetPossibleCardsToPlay = (o: {
   cardsOnHand: Card["id"][];
 }) => Card["id"][];
 
-export const getPossibleCardsToPlay: GetPossibleCardsToPlay = ({
+const getPossibleCardsToPlay: GetPossibleCardsToPlay = ({
   cardOnDiscardPile,
   cardsOnHand
 }) => {
@@ -97,13 +101,11 @@ export const getPossibleCardsToPlay: GetPossibleCardsToPlay = ({
   return validCards;
 };
 
-export const getGameCurrentPlayer = (game: Game): Player => {
+const getGameCurrentPlayer = (game: Game): Player => {
   return game.players.find(p => p.id === game.turn.player)!;
 };
 
-export const getOppositeDirection = (
-  direction: GameDirection
-): GameDirection => {
+const getOppositeDirection = (direction: GameDirection): GameDirection => {
   return direction === GameDirection.Clockwise
     ? GameDirection.Counterclockwise
     : GameDirection.Clockwise;
@@ -161,17 +163,28 @@ const endGameRound: EndGameRound = game => {
   return newGame;
 };
 
-type OnDeclareNextColor = (game: Game) => CardColor;
+type OnDeclareNextColor = (game: Game) => Promise<CardColor>;
+
+const defaultOnDeclareNextColor = () => {
+  const { item: color } = getRandomItem([
+    CardColor.Blue,
+    CardColor.Green,
+    CardColor.Red,
+    CardColor.Yellow
+  ]);
+
+  return Promise.resolve(color);
+};
 
 type ApplyEffectOfCardIntoGame = (o: {
   game: Game;
   playedCard: Card["id"] | null;
-  onDeclareNextColor: OnDeclareNextColor;
-}) => Game;
+  onDeclareNextColor?: OnDeclareNextColor;
+}) => Promise<Game>;
 
-const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
+const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = async ({
   game,
-  onDeclareNextColor,
+  onDeclareNextColor = defaultOnDeclareNextColor,
   playedCard: cardId
 }) => {
   const newGame = { ...game };
@@ -237,11 +250,19 @@ const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
     }
   }
 
-  newGame.board.nextColorFromWildCard =
-    card &&
-    (card.type === CardType.WildNormal || card.type === CardType.WildDrawFour)
-      ? onDeclareNextColor(game)
-      : null;
+  const getNextColor = async () => {
+    if (
+      !card ||
+      (card.type !== CardType.WildNormal && card.type !== CardType.WildDrawFour)
+    ) {
+      return null;
+    }
+
+    return onDeclareNextColor(newGame);
+  };
+
+  // eslint-disable-next-line require-atomic-updates
+  newGame.board.nextColorFromWildCard = await getNextColor();
 
   if (
     newGame.players.find(p => p.id === originalPlayerId)!.cards.length === 0
@@ -254,7 +275,7 @@ const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = ({
 
 type CreateGame = (o: { playersNum: number; originalDeck?: Card[] }) => Game;
 
-export const createGame: CreateGame = config => {
+const createGame: CreateGame = config => {
   if (config.playersNum < 2 || config.playersNum > 10) {
     throw new Error("Wrong number of players");
   }
@@ -308,18 +329,18 @@ export const createGame: CreateGame = config => {
 type OnChoosePlayedCard = (opts: {
   game: Game;
   possibleCards: Card["id"][];
-}) => Card["id"] | null;
+}) => Promise<Card["id"] | null>;
 
 type PlayTurn = (o: {
   game: Game;
   onChoosePlayedCard: OnChoosePlayedCard;
-  onDeclareNextColor: OnDeclareNextColor;
-}) => Game;
+  onDeclareNextColor?: OnDeclareNextColor;
+}) => Promise<Game>;
 
-export const playTurn: PlayTurn = ({
+const playTurn: PlayTurn = async ({
   game,
   onChoosePlayedCard,
-  onDeclareNextColor
+  onDeclareNextColor = defaultOnDeclareNextColor
 }) => {
   const newGame = {
     ...game,
@@ -357,7 +378,7 @@ export const playTurn: PlayTurn = ({
   let playedCard: Card["id"] | null = null;
 
   if (possibleCards.length) {
-    playedCard = onChoosePlayedCard({ game, possibleCards });
+    playedCard = await onChoosePlayedCard({ game, possibleCards });
 
     newGame.board.discardPile = newGame.board.discardPile.concat([playedCard!]);
 
@@ -380,13 +401,27 @@ export const playTurn: PlayTurn = ({
 
 export const _test: {
   applyEffectOfCardIntoGame?: ApplyEffectOfCardIntoGame;
+  defaultOnDeclareNextColor?: OnDeclareNextColor;
   endGameRound?: EndGameRound;
   getCardPoints?: GetCardPoints;
 } = {};
 
 // istanbul ignore else
 if (process.env.NODE_ENV === "test") {
-  _test.applyEffectOfCardIntoGame = applyEffectOfCardIntoGame;
-  _test.endGameRound = endGameRound;
-  _test.getCardPoints = getCardPoints;
+  Object.assign(_test, {
+    applyEffectOfCardIntoGame,
+    defaultOnDeclareNextColor,
+    endGameRound,
+    getCardPoints
+  });
 }
+
+export {
+  createGame,
+  getGameCurrentPlayer,
+  getNextPlayer,
+  getOppositeDirection,
+  getPossibleCardsToPlay,
+  isCard,
+  playTurn
+};

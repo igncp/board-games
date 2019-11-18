@@ -1,21 +1,87 @@
 import {
+  _test as helpersTest,
   createGame,
+  getGameCurrentPlayer,
   getNextPlayer,
   getOppositeDirection,
   getPossibleCardsToPlay,
   isCard,
-  _test as helpersTest
+  playTurn
 } from "../gameHelpers";
 import { getShuffledArray, _test as utilsTest } from "../utils";
 import { CardType, CardColor, GameDirection, GamePhase } from "../types";
-import { ALL_CARDS } from "../constants";
-import { runTestNTimes } from "../testUtils";
+import { ALL_CARDS, INITIAL_CARDS_NUM } from "../constants";
+import { runNTimes } from "../testUtils";
 
 const getRandomItem = utilsTest.getRandomItem!;
 
-const applyEffectOfCardIntoGame = helpersTest.applyEffectOfCardIntoGame!;
-const endGameRound = helpersTest.endGameRound!;
-const getCardPoints = helpersTest.getCardPoints!;
+const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }))!;
+const cardSkip = ALL_CARDS.find(isCard({ type: CardType.Skip }))!;
+const cardDrawTwo = ALL_CARDS.find(isCard({ type: CardType.DrawTwo }))!;
+const cardWildNormal = ALL_CARDS.find(isCard({ type: CardType.WildNormal }))!;
+const cardWildDrawFour = ALL_CARDS.find(
+  isCard({ type: CardType.WildDrawFour })
+)!;
+
+describe("createGame", () => {
+  it("returns the expected number of players", () => {
+    const game = createGame({ playersNum: 3 });
+
+    expect(game.players.length).toEqual(3);
+  });
+
+  it("throws when passing the wrong number of players", () =>
+    runNTimes(100, () => {
+      expect(() => createGame({ playersNum: 2 })).not.toThrow();
+      expect(() => createGame({ playersNum: 10 })).not.toThrow();
+
+      expect(() => createGame({ playersNum: 11 })).toThrow();
+      expect(() => createGame({ playersNum: 1 })).toThrow();
+    }));
+
+  it("can setup a game", () =>
+    runNTimes(100, () => {
+      const config = {
+        playersNum: 3
+      };
+      const game = createGame(config);
+
+      expect(game.players.length).toEqual(config.playersNum);
+      expect(game.phase).toEqual(GamePhase.Play);
+
+      game.players.forEach(player => {
+        expect(player.cards.length).toEqual(INITIAL_CARDS_NUM);
+      });
+
+      const totalCards =
+        game.players.reduce((acc, p) => {
+          return acc + p.cards.length;
+        }, 0) +
+        game.board.drawPile.length +
+        game.board.discardPile.length;
+
+      expect(totalCards).toEqual(ALL_CARDS.length);
+    }));
+});
+
+describe("getGameCurrentPlayer", () => {
+  it("returns the expected value", () => {
+    const playersNum = 10;
+    const game = createGame({ playersNum });
+
+    expect(getGameCurrentPlayer(game)).toEqual(
+      game.players.find(p => p.id === playersNum - 1)
+    );
+
+    for (let playerId = 0; playerId < playersNum; playerId += 1) {
+      game.turn.player = playerId;
+
+      expect(getGameCurrentPlayer(game)).toEqual(
+        game.players.find(p => p.id === playerId)
+      );
+    }
+  });
+});
 
 describe("getNextPlayer", () => {
   it("returns the expected value", () => {
@@ -85,14 +151,14 @@ describe("getShuffledArray", () => {
 
 describe("getPossibleCardsToPlay", () => {
   it("returns all cards when no card on draw pile", () => {
-    for (let i = 0; i < 100; i += 1) {
+    return runNTimes(100, () => {
       const deck = getShuffledArray(ALL_CARDS);
       const cardsOnHand = [deck[0], deck[1], deck[2]].map(c => c.id);
 
       expect(
         getPossibleCardsToPlay({ cardOnDiscardPile: null, cardsOnHand })
       ).toEqual(cardsOnHand);
-    }
+    });
   });
 
   it("returns expected cards for numbers", () => {
@@ -141,123 +207,175 @@ describe("getPossibleCardsToPlay", () => {
   });
 });
 
-describe("applyEffectOfCardIntoGame", () => {
-  it("sets the next color on the board on number", () => {
-    const cardGreen2 = ALL_CARDS.find(
-      isCard({ type: CardType.Number, color: CardColor.Green, value: 2 })
-    );
-    const game = createGame({ playersNum: 5 });
+describe("playTurn", () => {
+  it("has the expected result on first turn", () =>
+    runNTimes(100, async () => {
+      const game = createGame({ playersNum: 10 });
+      const newGame = await playTurn({
+        game,
+        onChoosePlayedCard: async ({ possibleCards }) => possibleCards[0]!
+      });
 
-    expect(game.board.nextColorFromWildCard).toEqual(null);
+      // this is only true because of the number of players
+      expect(newGame.turn.player).not.toEqual(game.turn.player);
+      expect(newGame.board.discardPile.length).not.toBeGreaterThan(2);
+    }));
 
-    const newGame = applyEffectOfCardIntoGame({
-      game,
-      onDeclareNextColor: () => CardColor.Green,
-      playedCard: cardGreen2!.id
-    });
+  it("has the expected result on first turn (if player had no cards)", () =>
+    runNTimes(100, async () => {
+      const game = createGame({ playersNum: 10 });
+      const player = getGameCurrentPlayer(game);
 
-    expect(newGame.board.nextColorFromWildCard).toEqual(null);
-  });
+      // if this is not valid in the future, set it up to have a card that can't
+      // be used
+      player.cards = [];
 
-  it(
-    "sets the next color on the board on wild",
-    runTestNTimes(100, () => {
-      const { item: color } = getRandomItem([
-        CardColor.Green,
-        CardColor.Yellow,
-        CardColor.Blue
-      ]);
-      const { item: cardType } = getRandomItem([
-        CardType.WildNormal,
-        CardType.WildDrawFour
-      ]);
-      const cardWild = ALL_CARDS.find(isCard({ type: cardType }));
+      const newGame = await playTurn({
+        game,
+        onChoosePlayedCard: async ({ possibleCards }) => possibleCards[0]!,
+        onDeclareNextColor: async () => CardColor.Green
+      });
+
+      // this is only true because of the number of players
+      expect(newGame.turn.player).not.toEqual(game.turn.player);
+      expect(newGame.board.drawPile.length).toBeGreaterThan(
+        game.board.drawPile.length - 6
+      );
+      expect(newGame.board.discardPile.length).not.toBeGreaterThan(2);
+    }));
+});
+
+describe("helpersTest", () => {
+  const applyEffectOfCardIntoGame = helpersTest.applyEffectOfCardIntoGame!;
+  const defaultOnDeclareNextColor = helpersTest.defaultOnDeclareNextColor!;
+  const endGameRound = helpersTest.endGameRound!;
+  const getCardPoints = helpersTest.getCardPoints!;
+
+  describe("applyEffectOfCardIntoGame", () => {
+    it("sets the next color on the board on number", async () => {
+      const cardGreen2 = ALL_CARDS.find(
+        isCard({ type: CardType.Number, color: CardColor.Green, value: 2 })
+      );
       const game = createGame({ playersNum: 5 });
 
       expect(game.board.nextColorFromWildCard).toEqual(null);
 
-      const newGame = applyEffectOfCardIntoGame({
+      const newGame = await applyEffectOfCardIntoGame({
         game,
-        onDeclareNextColor: () => color,
-        playedCard: cardWild!.id
+        onDeclareNextColor: async () => CardColor.Green,
+        playedCard: cardGreen2!.id
       });
 
-      expect(game.board.nextColorFromWildCard).toEqual(null);
-      expect(newGame.board.nextColorFromWildCard).toEqual(color);
-    })
-  );
+      expect(newGame.board.nextColorFromWildCard).toEqual(null);
+    });
 
-  it(
-    "correctly uses reverse when two players",
-    runTestNTimes(100, () => {
-      const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }));
-      const game = createGame({ playersNum: 2 });
-      game.turn.player = 0;
+    it("sets the next color on the board on wild", () =>
+      runNTimes(100, async () => {
+        const { item: color } = getRandomItem([
+          CardColor.Green,
+          CardColor.Red,
+          CardColor.Yellow,
+          CardColor.Blue
+        ]);
+        const { item: cardType } = getRandomItem([
+          CardType.WildNormal,
+          CardType.WildDrawFour
+        ]);
+        const cardWild = ALL_CARDS.find(isCard({ type: cardType }));
+        const game = createGame({ playersNum: 5 });
 
-      expect(game.turn.player).toEqual(0);
+        expect(game.board.nextColorFromWildCard).toEqual(null);
 
-      const newGame = applyEffectOfCardIntoGame({
-        game,
-        onDeclareNextColor: () => CardColor.Blue,
-        playedCard: cardReverse!.id
+        const newGame = await applyEffectOfCardIntoGame({
+          game,
+          onDeclareNextColor: async () => color,
+          playedCard: cardWild!.id
+        });
+
+        expect(game.board.nextColorFromWildCard).toEqual(null);
+        expect(newGame.board.nextColorFromWildCard).toEqual(color);
+      }));
+
+    it("correctly uses reverse when two players", () =>
+      runNTimes(100, async () => {
+        const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }));
+        const game = createGame({ playersNum: 2 });
+        game.turn.player = 0;
+
+        expect(game.turn.player).toEqual(0);
+
+        const newGame = await applyEffectOfCardIntoGame({
+          game,
+          playedCard: cardReverse!.id
+        });
+
+        expect(newGame.turn.player).toEqual(0);
+      }));
+  });
+
+  describe("defaultOnDeclareNextColor", () => {
+    it("always returns a color", () => {
+      return runNTimes(100, async () => {
+        const game = createGame({ playersNum: 3 });
+        const result = await defaultOnDeclareNextColor(game);
+
+        expect(
+          [
+            CardColor.Green,
+            CardColor.Red,
+            CardColor.Yellow,
+            CardColor.Blue
+          ].includes(result)
+        ).toEqual(true);
       });
-
-      expect(newGame.turn.player).toEqual(0);
-    })
-  );
-});
-
-describe("endGameRound", () => {
-  it("sets the expected values when game does not finish", () => {
-    const game = createGame({ playersNum: 3 });
-    game.players[0]!.cards = [];
-    const newGame = endGameRound(game);
-
-    expect(game.phase).not.toEqual(GamePhase.EndOfRound);
-    expect(newGame.phase).toEqual(GamePhase.EndOfRound);
+    });
   });
 
-  it("sets the expected values when game finishes", () => {
-    const game = createGame({ playersNum: 10 });
+  describe("endGameRound", () => {
+    it("sets the expected values when game does not finish", () => {
+      const game = createGame({ playersNum: 3 });
+      game.players[0]!.cards = [];
+      const newGame = endGameRound(game);
 
-    game.players[0]!.cards = [];
-    game.players[0]!.points = 499;
+      expect(game.phase).not.toEqual(GamePhase.EndOfRound);
+      expect(newGame.phase).toEqual(GamePhase.EndOfRound);
+    });
 
-    const newGame = endGameRound(game);
+    it("sets the expected values when game finishes", () => {
+      const game = createGame({ playersNum: 10 });
 
-    expect(game.phase).not.toEqual(GamePhase.EndOfRound);
-    expect(newGame.phase).toEqual(GamePhase.Finish);
+      game.players[0]!.cards = [];
+      game.players[0]!.points = 499;
+
+      const newGame = endGameRound(game);
+
+      expect(game.phase).not.toEqual(GamePhase.EndOfRound);
+      expect(newGame.phase).toEqual(GamePhase.Finish);
+    });
+
+    it("throws when no winner player", () => {
+      const game = createGame({ playersNum: 10 });
+
+      expect(() => endGameRound(game)).toThrow();
+    });
   });
 
-  it("throws when no winner player", () => {
-    const game = createGame({ playersNum: 10 });
+  describe("getCardPoints", () => {
+    it("returns the expected values", () => {
+      for (let cardVal = 0; cardVal < 10; cardVal += 1) {
+        const card = ALL_CARDS.find(
+          isCard({ type: CardType.Number, value: cardVal })
+        )!;
 
-    expect(() => endGameRound(game)).toThrow();
-  });
-});
+        expect(getCardPoints(card.id)).toEqual(cardVal);
+      }
 
-describe("getCardPoints", () => {
-  it("returns the expected values", () => {
-    const card1 = ALL_CARDS.find(isCard({ type: CardType.Number, value: 1 }))!;
-    const card3 = ALL_CARDS.find(isCard({ type: CardType.Number, value: 3 }))!;
-    const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }))!;
-    const cardSkip = ALL_CARDS.find(isCard({ type: CardType.Skip }))!;
-    const cardDrawTwo = ALL_CARDS.find(isCard({ type: CardType.DrawTwo }))!;
-    const cardWildNormal = ALL_CARDS.find(
-      isCard({ type: CardType.WildNormal })
-    )!;
-    const cardWildDrawFour = ALL_CARDS.find(
-      isCard({ type: CardType.WildDrawFour })
-    )!;
+      expect(getCardPoints(cardReverse.id)).toEqual(20);
+      expect(getCardPoints(cardDrawTwo.id)).toEqual(20);
+      expect(getCardPoints(cardSkip.id)).toEqual(20);
 
-    expect(getCardPoints(card1.id)).toEqual(1);
-    expect(getCardPoints(card3.id)).toEqual(3);
-
-    expect(getCardPoints(cardReverse.id)).toEqual(20);
-    expect(getCardPoints(cardDrawTwo.id)).toEqual(20);
-    expect(getCardPoints(cardSkip.id)).toEqual(20);
-
-    expect(getCardPoints(cardWildNormal.id)).toEqual(50);
-    expect(getCardPoints(cardWildDrawFour.id)).toEqual(50);
+      expect(getCardPoints(cardWildNormal.id)).toEqual(50);
+      expect(getCardPoints(cardWildDrawFour.id)).toEqual(50);
+    });
   });
 });

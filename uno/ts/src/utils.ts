@@ -52,5 +52,7 @@ export const _test: {
 
 // istanbul ignore else
 if (process.env.NODE_ENV === "test") {
-  _test.getRandomItem = getRandomItem;
+  Object.assign(_test, {
+    getRandomItem
+  });
 }

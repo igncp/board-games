@@ -1,8 +1,7 @@
-export const runTestNTimes = (
-  n: number,
-  fn: () => void
-): (() => void) => () => {
+type RunNTimes = (n: number, fn: (num?: number) => void) => Promise<void>;
+
+export const runNTimes: RunNTimes = async (n, fn) => {
   for (let i = 0; i < n; i++) {
-    fn();
+    await fn(i);
   }
 };

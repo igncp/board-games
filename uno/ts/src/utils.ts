@@ -7,7 +7,7 @@ type GetRandomItem = <A extends unknown>(
   items: A[]
 ) => { index: number; item: A; newItems: A[] };
 
-export const getRandomItem: GetRandomItem = items => {
+const getRandomItem: GetRandomItem = items => {
   const index = Math.floor(Math.random() * items.length);
   const item = items[index];
   const newItems = items.slice(0);
@@ -17,7 +17,7 @@ export const getRandomItem: GetRandomItem = items => {
   return { index, item, newItems };
 };
 
-export const getShuffledArray = <A extends unknown>(items: A[]): A[] => {
+const getShuffledArray = <A extends unknown>(items: A[]): A[] => {
   let prevItems = items.slice(0);
   const newItems: A[] = [];
 
@@ -31,7 +31,7 @@ export const getShuffledArray = <A extends unknown>(items: A[]): A[] => {
   return newItems;
 };
 
-export const extractArrayNItemsOrLess = <A extends unknown>(
+const extractArrayNItemsOrLess = <A extends unknown>(
   arr: A[],
   num: number
 ): { items: A[]; newArray: A[] } => {
@@ -46,13 +46,4 @@ export const extractArrayNItemsOrLess = <A extends unknown>(
   return { items, newArray };
 };
 
-export const _test: {
-  getRandomItem?: GetRandomItem;
-} = {};
-
-// istanbul ignore else
-if (process.env.NODE_ENV === "test") {
-  Object.assign(_test, {
-    getRandomItem
-  });
-}
+export { getRandomItem, getShuffledArray, extractArrayNItemsOrLess };

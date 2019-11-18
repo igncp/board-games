@@ -8,12 +8,10 @@ import {
   isCard,
   playTurn
 } from "../gameHelpers";
-import { getShuffledArray, _test as utilsTest } from "../utils";
+import { getShuffledArray, getRandomItem } from "../utils";
 import { CardType, CardColor, GameDirection, GamePhase } from "../types";
 import { ALL_CARDS, INITIAL_CARDS_NUM } from "../constants";
 import { runNTimes } from "../testUtils";
-
-const getRandomItem = utilsTest.getRandomItem!;
 
 const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }))!;
 const cardSkip = ALL_CARDS.find(isCard({ type: CardType.Skip }))!;

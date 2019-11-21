@@ -11,7 +11,7 @@ import {
 import { getShuffledArray, getRandomItem } from "../utils";
 import { CardType, CardColor, GameDirection, GamePhase } from "../types";
 import { ALL_CARDS, INITIAL_CARDS_NUM } from "../constants";
-import { runNTimes } from "../testUtils";
+import { runNTimes, getRandomIntegerInRange } from "../testUtils";
 
 const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }))!;
 const cardSkip = ALL_CARDS.find(isCard({ type: CardType.Skip }))!;
@@ -20,6 +20,8 @@ const cardWildNormal = ALL_CARDS.find(isCard({ type: CardType.WildNormal }))!;
 const cardWildDrawFour = ALL_CARDS.find(
   isCard({ type: CardType.WildDrawFour })
 )!;
+
+const getRandomPlayersNum = () => getRandomIntegerInRange(2, 10);
 
 describe("createGame", () => {
   it("returns the expected number of players", () => {
@@ -60,6 +62,26 @@ describe("createGame", () => {
 
       expect(totalCards).toEqual(ALL_CARDS.length);
     }));
+
+  it("delivers the cards to each player in the correct order", () => {
+    /**
+     * This test is true because the originalDeck is sorted
+     */
+    for (let playersNum = 2; playersNum < 10; playersNum += 1) {
+      const game = createGame({
+        originalDeck: ALL_CARDS.slice(0),
+        playersNum
+      });
+
+      for (let cardIdx = 0; cardIdx < INITIAL_CARDS_NUM; cardIdx += 1) {
+        for (let playerIdx = 0; playersNum < playersNum; playerIdx += 1) {
+          expect(game.players[playerIdx].cards[cardIdx]).toEqual(
+            cardIdx + playerIdx
+          );
+        }
+      }
+    }
+  });
 });
 
 describe("getGameCurrentPlayer", () => {
@@ -245,6 +267,7 @@ describe("playTurn", () => {
 
 describe("helpersTest", () => {
   const applyEffectOfCardIntoGame = helpersTest.applyEffectOfCardIntoGame!;
+  const applyEffectOfFirstDiscardCard = helpersTest.applyEffectOfFirstDiscardCard!;
   const defaultOnDeclareNextColor = helpersTest.defaultOnDeclareNextColor!;
   const endGameRound = helpersTest.endGameRound!;
   const getCardPoints = helpersTest.getCardPoints!;
@@ -309,6 +332,40 @@ describe("helpersTest", () => {
 
         expect(newGame.turn.player).toEqual(0);
       }));
+  });
+
+  describe("applyEffectOfFirstDiscardCard", () => {
+    it("returns the expected effect when a skip card", () => {
+      return runNTimes(100, () => {
+        const cardSkip = ALL_CARDS.find(isCard({ type: CardType.Skip }))!;
+        const playersNum = getRandomPlayersNum();
+        const game = createGame({ playersNum, disableFirstCardEffect: true });
+
+        game.board.discardPile = [cardSkip.id];
+
+        const newGame = applyEffectOfFirstDiscardCard(game);
+
+        expect(newGame.turn.player).toEqual(playersNum - 2);
+        expect(newGame.board.discardPile).toEqual([cardSkip.id]);
+        expect(game.turn.player).toEqual(0);
+      });
+    });
+
+    it("returns the expected effect when a reverse card", () => {
+      return runNTimes(100, () => {
+        const cardReverse = ALL_CARDS.find(isCard({ type: CardType.Reverse }))!;
+        const playersNum = getRandomPlayersNum();
+        const game = createGame({ playersNum, disableFirstCardEffect: true });
+
+        game.board.discardPile = [cardReverse.id];
+
+        const newGame = applyEffectOfFirstDiscardCard(game);
+
+        expect(newGame.turn.player).toEqual(0);
+        expect(newGame.board.discardPile).toEqual([cardReverse.id]);
+        expect(game.turn.player).toEqual(0);
+      });
+    });
   });
 
   describe("defaultOnDeclareNextColor", () => {

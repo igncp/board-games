@@ -5,3 +5,9 @@ export const runNTimes: RunNTimes = async (n, fn) => {
     await fn(i);
   }
 };
+
+type GetRandomIntegerInRange = (min: number, max: number) => number;
+
+export const getRandomIntegerInRange: GetRandomIntegerInRange = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};

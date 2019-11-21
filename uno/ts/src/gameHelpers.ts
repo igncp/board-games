@@ -163,6 +163,24 @@ const endGameRound: EndGameRound = game => {
   return newGame;
 };
 
+type MoveOneTurnMutating = (g: Game, positions?: number) => void;
+
+const moveOneTurnMutating: MoveOneTurnMutating = (game, positions) => {
+  const playersIds = game.players.map(p => p.id);
+  const fromPlayerId = game.turn.player;
+  const { direction } = game;
+
+  game.turn = {
+    ...game.turn,
+    player: getNextPlayer({
+      playersIds,
+      fromPlayerId,
+      direction,
+      positions
+    })
+  };
+};
+
 type OnDeclareNextColor = (game: Game) => Promise<CardColor>;
 
 const defaultOnDeclareNextColor = () => {
@@ -192,34 +210,19 @@ const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = async ({
   const card = typeof cardId === "number" ? CARD_ID_TO_CARD_MAP[cardId] : null;
   const originalPlayerId = newGame.turn.player;
 
-  const updateTurn = (positions?: number) => {
-    const playersIds = newGame.players.map(p => p.id);
-    const fromPlayerId = newGame.turn.player;
-    const { direction } = newGame;
-    newGame.turn = {
-      ...newGame.turn,
-      player: getNextPlayer({
-        playersIds,
-        fromPlayerId,
-        direction,
-        positions
-      })
-    };
-  };
-
   if (!card) {
-    updateTurn();
+    moveOneTurnMutating(newGame);
   } else if (card.type === CardType.Skip) {
-    updateTurn(2);
+    moveOneTurnMutating(newGame, 2);
   } else if (card.type === CardType.Reverse) {
     if (newGame.players.length > 2) {
       newGame.direction = getOppositeDirection(newGame.direction);
-      updateTurn();
+      moveOneTurnMutating(newGame);
     } else {
-      updateTurn(2);
+      moveOneTurnMutating(newGame, 2);
     }
   } else {
-    updateTurn();
+    moveOneTurnMutating(newGame);
   }
 
   const drawNCards = (n: number) => {
@@ -246,7 +249,7 @@ const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = async ({
       drawNCards(2);
     } else if (card.type === CardType.WildDrawFour) {
       drawNCards(4);
-      updateTurn();
+      moveOneTurnMutating(newGame);
     }
   }
 
@@ -273,7 +276,32 @@ const applyEffectOfCardIntoGame: ApplyEffectOfCardIntoGame = async ({
   return newGame;
 };
 
-type CreateGame = (o: { playersNum: number; originalDeck?: Card[] }) => Game;
+type ApplyEffectOfFirstDiscardCard = (g: Game) => Game;
+
+const applyEffectOfFirstDiscardCard: ApplyEffectOfFirstDiscardCard = game => {
+  const newGame = { ...game };
+
+  const [cardId] = newGame.board.discardPile;
+
+  moveOneTurnMutating(newGame);
+
+  const card = CARD_ID_TO_CARD_MAP[cardId];
+
+  if (card.type === CardType.Skip) {
+    moveOneTurnMutating(newGame);
+  } else if (card.type === CardType.Reverse) {
+    newGame.direction = getOppositeDirection(newGame.direction);
+    moveOneTurnMutating(newGame);
+  }
+
+  return newGame;
+};
+
+type CreateGame = (o: {
+  disableFirstCardEffect?: boolean;
+  originalDeck?: Card[];
+  playersNum: number;
+}) => Game;
 
 const createGame: CreateGame = config => {
   if (config.playersNum < 2 || config.playersNum > 10) {
@@ -292,31 +320,24 @@ const createGame: CreateGame = config => {
     });
   }
 
-  players.forEach(player => {
-    for (let i = 0; i < INITIAL_CARDS_NUM; i++) {
+  for (let _ = 0; _ < INITIAL_CARDS_NUM; _ += 1) {
+    players.forEach(player => {
       const item = deckIds.pop()!;
 
       player.cards.push(item);
-    }
-  });
+    });
+  }
 
   const discardPile = [deckIds.pop()!];
 
   const dealerPlayerIdx = 0;
-  const direction = GameDirection.Clockwise;
-
-  return {
+  const game = {
     dealer: players[dealerPlayerIdx].id,
-    direction,
+    direction: GameDirection.Clockwise,
     players,
     phase: GamePhase.Play,
     turn: {
-      lastPlayerToPass: null,
-      player: getNextPlayer({
-        direction,
-        fromPlayerId: dealerPlayerIdx,
-        playersIds: players.map(p => p.id)
-      })
+      player: dealerPlayerIdx
     },
     board: {
       discardPile,
@@ -324,6 +345,10 @@ const createGame: CreateGame = config => {
       nextColorFromWildCard: null
     }
   };
+
+  return config.disableFirstCardEffect
+    ? game
+    : applyEffectOfFirstDiscardCard(game);
 };
 
 type OnChoosePlayedCard = (opts: {
@@ -401,6 +426,7 @@ const playTurn: PlayTurn = async ({
 
 export const _test: {
   applyEffectOfCardIntoGame?: ApplyEffectOfCardIntoGame;
+  applyEffectOfFirstDiscardCard?: ApplyEffectOfFirstDiscardCard;
   defaultOnDeclareNextColor?: OnDeclareNextColor;
   endGameRound?: EndGameRound;
   getCardPoints?: GetCardPoints;
@@ -410,6 +436,7 @@ export const _test: {
 if (process.env.NODE_ENV === "test") {
   Object.assign(_test, {
     applyEffectOfCardIntoGame,
+    applyEffectOfFirstDiscardCard,
     defaultOnDeclareNextColor,
     endGameRound,
     getCardPoints

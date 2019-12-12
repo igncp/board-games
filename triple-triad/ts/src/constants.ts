@@ -2,22 +2,75 @@ type PlayerId = number;
 
 type CardId = number;
 
+type CardCopyUid = string;
+
+type CardReference = {
+  cardId: CardId;
+  cardCopyUid: CardCopyUid;
+};
+
+enum CardElement {
+  Earth = "EARTH",
+  Fire = "FIRE",
+  Holy = "HOLY",
+  Ice = "ICE",
+  Neutral = "NEUTRAL",
+  Poison = "POISON",
+  Thunder = "THUNDER",
+  Water = "WATER",
+  Wind = "WIND"
+}
+
 type Card = {
   id: CardId;
+  name: string;
+  level: number;
+  element: CardElement;
+  ranks: [number, number, number, number];
 };
 
 type Player = {
-  allCardsIds: Card["id"][];
-  gameCards: Card["id"][];
+  allCards: CardReference[];
+  gameCards: CardReference[];
   id: PlayerId;
 };
 
-type Board = {};
+type BoardSlot = {
+  cardReference: CardReference | null;
+  cardPlayer: Player["id"] | null;
+  element: CardElement | null;
+};
+
+type Board = {
+  slots: BoardSlot[][];
+};
+
+type Turn = {
+  playerId: Player["id"];
+};
+
+enum GamePhase {
+  Playing = "PLAYING",
+  End = "END"
+}
 
 type Game = {
   board: Board;
-  usedCards: Card[];
   players: Player[];
+  phase: GamePhase;
+  turn: Turn;
+  usedCards: Card[];
 };
 
-export { Game, Player };
+export {
+  Board,
+  BoardSlot,
+  Card,
+  CardCopyUid,
+  CardElement,
+  CardId,
+  CardReference,
+  Game,
+  GamePhase,
+  Player
+};

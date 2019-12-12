@@ -25,7 +25,8 @@ Implementation of the rules for FF VIII version.
     - Modularity
     - Extendability:
         - Make assumptions only when complexity decreases considerably (to support different rules in future)
-        - Create hook functions (outside of game data structure)
+        - Create function hooks (outside of game data structure)
+        - Some defaults can be overridden via options and via the game type
     - Be able to be used by (basic) simulations
 
 ## TODO
@@ -36,6 +37,8 @@ Implementation of the rules for FF VIII version.
     - Create Game
     - Run turn
     - Finish game
+- Add game hooks
+- Add game types
 
 ### Infra
 

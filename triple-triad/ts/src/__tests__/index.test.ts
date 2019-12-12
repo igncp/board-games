@@ -1,4 +1,4 @@
-import tripleTriad from "..";
+import * as tripleTriad from "..";
 
 describe("public interface", () => {
   it("is defined", () => {

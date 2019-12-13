@@ -20,11 +20,14 @@ const getIsBoardFull: GetIsBoardFull = board => {
   return true;
 };
 
-type FlatSlot = {
-  slot: BoardSlot;
+type SlotPosition = {
   row: number;
   column: number;
 };
+
+type FlatSlot = {
+  slot: BoardSlot;
+} & SlotPosition;
 
 type GetFlatSlots = (s: Board["slots"]) => FlatSlot[];
 
@@ -40,4 +43,26 @@ const getFlatSlots: GetFlatSlots = slots => {
   }, []);
 };
 
-export { getIsBoardFull, getFlatSlots };
+type GetSurrondingSlotsWithCards = (
+  s: Board["slots"],
+  p: SlotPosition
+) => FlatSlot[];
+
+const getSurrondingSlotsWithCards: GetSurrondingSlotsWithCards = (
+  slots,
+  position
+) => {
+  return getFlatSlots(slots).filter(flatSlot => {
+    const isDifferentSlot =
+      flatSlot.row !== position.row || flatSlot.column !== position.column;
+
+    return (
+      isDifferentSlot &&
+      flatSlot.slot.cardPlayer !== null &&
+      Math.abs(flatSlot.row - position.row) <= 1 &&
+      Math.abs(flatSlot.column - position.column) <= 1
+    );
+  });
+};
+
+export { getIsBoardFull, getFlatSlots, getSurrondingSlotsWithCards };

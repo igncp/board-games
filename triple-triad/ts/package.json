@@ -9,7 +9,7 @@
     "_lint:fix": "npm run -s _lint -- --fix",
     "_prettier:check": "npm run -s _prettier:run -- -c",
     "_prettier:fix": "npm run -s _prettier:run -- --write",
-    "_prettier:run": "prettier 'src/**/*.ts' .eslintrc.js",
+    "_prettier:run": "prettier 'src/**/*.ts' .eslintrc.js jest.config.js tsconfig.json",
     "_type-coverage": "type-coverage -p . --detail --strict",
     "build": "rm -rf lib && tsc --build tsbuild.json && webpack",
     "check": "npm-run-all -l -s _lint test _type-coverage build _prettier:check",

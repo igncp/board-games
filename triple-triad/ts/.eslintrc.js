@@ -29,6 +29,7 @@ module.exports = {
       { blankLine: "always", prev: "*", next: "if" },
       { blankLine: "always", prev: "*", next: "multiline-expression" },
       { blankLine: "always", prev: "*", next: "block-like" }
-    ]
+    ],
+    "require-atomic-updates": 0
   }
 };

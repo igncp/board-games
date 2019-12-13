@@ -21,6 +21,13 @@ enum CardElement {
   Wind = "WIND"
 }
 
+enum RankIndex {
+  Up = 0,
+  Right = 1,
+  Down = 2,
+  Left = 3
+}
+
 type Card = {
   id: CardId;
   name: string;
@@ -72,5 +79,6 @@ export {
   CardReference,
   Game,
   GamePhase,
-  Player
+  Player,
+  RankIndex
 };

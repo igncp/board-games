@@ -36,6 +36,7 @@ Implementation of the rules for FF VIII version.
 - Initial MVP
     - Create Game
     - Run turn
+        - Apply card effects
     - Finish game
 - Add game hooks
 - Add game types

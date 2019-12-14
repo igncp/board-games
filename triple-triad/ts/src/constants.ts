@@ -28,6 +28,19 @@ enum RankIndex {
   Left = 3
 }
 
+enum SpecialRule {
+  Elemental = "Elemental",
+  Open = "Open",
+  Same = "Same"
+}
+
+enum TradeRule {
+  All = "All",
+  Difference = "Difference",
+  Direct = "Direct",
+  One = "One"
+}
+
 type Card = {
   id: CardId;
   name: string;
@@ -40,6 +53,7 @@ type Player = {
   allCards: CardReference[];
   gameCards: CardReference[];
   id: PlayerId;
+  wonCards: CardCopyUid[];
 };
 
 type BoardSlot = {
@@ -63,10 +77,17 @@ enum GamePhase {
 
 type Game = {
   board: Board;
-  players: Player[];
   phase: GamePhase;
+  players: Player[];
+  specialRules: SpecialRule[];
+  tradeRule: TradeRule;
   turn: Turn;
   usedCards: Card[];
+};
+
+type SlotPosition = {
+  row: number;
+  column: number;
 };
 
 export {
@@ -80,5 +101,8 @@ export {
   Game,
   GamePhase,
   Player,
-  RankIndex
+  RankIndex,
+  SlotPosition,
+  SpecialRule,
+  TradeRule
 };

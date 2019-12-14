@@ -22,14 +22,20 @@ module.exports = {
     "@typescript-eslint/no-non-null-assertion": 0,
     "@typescript-eslint/no-unused-vars": 2,
 
+    eqeqeq: 2,
     "newline-before-return": 2,
-    semi: 2,
+    "no-console": 2,
+    "no-shadow": 2,
+    "no-useless-return": 2,
+    "prefer-template": 2,
     "padding-line-between-statements": [
       "error",
       { blankLine: "always", prev: "*", next: "if" },
       { blankLine: "always", prev: "*", next: "multiline-expression" },
       { blankLine: "always", prev: "*", next: "block-like" }
     ],
-    "require-atomic-updates": 0
+    "require-atomic-updates": 0,
+    semi: 2,
+    "sort-keys": 2
   }
 };

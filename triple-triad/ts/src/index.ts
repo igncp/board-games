@@ -1,5 +1,18 @@
 import defaultCards from "./defaultCards";
 import { createGame, playTurn } from "./game";
-import { GamePhase } from "./constants";
+import { GamePhase, TradeRule, SpecialRule, CardElement } from "./constants";
 
-export { defaultCards, createGame, playTurn, GamePhase };
+import { getFlatSlots } from "./helpers/board";
+
+const boardHelpers = { getFlatSlots };
+
+export {
+  CardElement,
+  GamePhase,
+  SpecialRule,
+  TradeRule,
+  boardHelpers,
+  createGame,
+  defaultCards,
+  playTurn
+};

@@ -1,4 +1,4 @@
-import { Board, BoardSlot } from "../constants";
+import { Board, BoardSlot, Player } from "../constants";
 
 type GetIsBoardFull = (b: Board) => boolean;
 
@@ -34,9 +34,9 @@ type GetFlatSlots = (s: Board["slots"]) => FlatSlot[];
 const getFlatSlots: GetFlatSlots = slots => {
   return slots.reduce((acc: FlatSlot[], slotRow, slotRowIdx) => {
     const parsedRow = slotRow.map((slot, slotIdx) => ({
-      slot,
+      column: slotIdx,
       row: slotRowIdx,
-      column: slotIdx
+      slot
     }));
 
     return acc.concat(parsedRow);
@@ -65,4 +65,56 @@ const getSurrondingSlotsWithCards: GetSurrondingSlotsWithCards = (
   });
 };
 
-export { getIsBoardFull, getFlatSlots, getSurrondingSlotsWithCards };
+type GetWinner = (slots: Board["slots"]) => Player["id"];
+
+const getWinnerPlayerId: GetWinner = slots => {
+  type Stats = { [playerId: string]: number };
+
+  const stats: Stats = getFlatSlots(slots).reduce((acc: Stats, flatSlot) => {
+    if (flatSlot.slot.cardPlayer !== null) {
+      acc[flatSlot.slot.cardPlayer] = (acc[flatSlot.slot.cardPlayer] || 0) + 1;
+    }
+
+    return acc;
+  }, {});
+
+  return Object.keys(stats).reduce((acc, playerIdStr) => {
+    if (stats[playerIdStr] > (stats[acc] || 0)) {
+      return Number(playerIdStr);
+    }
+
+    return acc;
+  }, 0);
+};
+
+type CreateEmptyBoard = () => Board;
+
+const createEmptyBoard: CreateEmptyBoard = () => {
+  const slots: BoardSlot[][] = [];
+
+  for (let slotsRow = 0; slotsRow < 3; slotsRow += 1) {
+    const row: BoardSlot[] = [];
+
+    for (let slotsColumn = 0; slotsColumn < 3; slotsColumn += 1) {
+      row.push({
+        cardPlayer: null,
+        cardReference: null,
+        element: null
+      });
+    }
+
+    slots.push(row);
+  }
+
+  return {
+    slots
+  };
+};
+
+export {
+  createEmptyBoard,
+  getFlatSlots,
+  getIsBoardFull,
+  getSurrondingSlotsWithCards,
+  getWinnerPlayerId
+};

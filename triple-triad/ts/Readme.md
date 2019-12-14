@@ -9,12 +9,12 @@ Implementation of the rules for FF VIII version.
 - Patterns:
     - Data-Driven:
         - Types are the base and are separated from functions
-    - Non mutation of input
+    - Non mutation of input (without deep-copy of whole structure)
     - Heavily using:
         - linting (many rules, 0 warnings / errors allowed)
         - static types (100% coverage)
         - unit / integration tests (100% coverage)
-    - No UI
+    - No GUI
     - Async API
 
 - Alternatives:
@@ -29,24 +29,32 @@ Implementation of the rules for FF VIII version.
         - Some defaults can be overridden via options and via the game type
     - Be able to be used by (basic) simulations
 
+## Features
+
+- [x] Trade Rules
+- Special rules
+    - [x] Elemental
+    - [ ] Rest
+- [ ] Regions (with special rules)
+
 ## TODO
 
 ### Features
 
-- Initial MVP
-    - Create Game
-    - Run turn
-        - Apply card effects
-    - Finish game
-- Add game hooks
-- Add game types
+- Setup simulations?
+    - Random behavior for player A and a strategy for player B
+    - Easy declarative setup of initial cards
+- Periodic: Refactor tests
+    - Use existing utils functions
+    - Cover more edge cases (without greatly increasing code)
+- Periodic: Move code to helpers when cleaner (same level of abstraction)
+- Periodic: Move steps to generic template
 
 ### Infra
 
 - Documentation: docsify installed
+    - Add game hooks options
+    - Add checklist for when update docs
 - Different builds: organize scripts
-- Minimize
-
-## Notes
-
-- A player can have the same card multiple times
+    - Source maps
+    - Extra helpers

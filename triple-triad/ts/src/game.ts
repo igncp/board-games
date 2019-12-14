@@ -1,32 +1,65 @@
 import {
-  BoardSlot,
-  Card,
+  Board,
+  CardCopyUid,
+  CardElement,
   CardReference,
   Game,
   GamePhase,
   Player,
-  RankIndex
+  RankIndex,
+  SlotPosition,
+  SpecialRule,
+  TradeRule
 } from "./constants";
 import defaultCards from "./defaultCards";
 import { getRandomItem, createUUId } from "./utils";
 
 import {
+  createEmptyBoard,
   getFlatSlots,
   getIsBoardFull,
-  getSurrondingSlotsWithCards
+  getSurrondingSlotsWithCards,
+  getWinnerPlayerId
 } from "./helpers/board";
-import { oppositeRankIndexMap, getCardIdToCardMap } from "./helpers/card";
+import { getOppositePlayer } from "./helpers/player";
+import {
+  oppositeRankIndexMap,
+  getCardIdToCardMap,
+  getCardRankOffset
+} from "./helpers/card";
+
+type OnAddElementsIntoBoard = (board: Board) => Promise<Board>;
+
+const defaultOnAddElementsIntoBoard: OnAddElementsIntoBoard = board => {
+  const newBoard = { ...board, slots: board.slots.map(r => r.slice(0)) };
+  const probabilityOfElement = 0.3;
+  const possibleElements = Object.values(CardElement);
+
+  getFlatSlots(newBoard.slots)
+    .filter(() => {
+      return Math.random() < probabilityOfElement;
+    })
+    .forEach(flatSlot => {
+      const { item: element } = getRandomItem(possibleElements);
+      const { row, column } = flatSlot;
+
+      newBoard.slots[row][column] = { ...flatSlot.slot, element };
+    });
+
+  return Promise.resolve(newBoard);
+};
 
 type CreateGameOpts = {
-  getPlayerGameCards?(o: { allCards: Card[] }): Promise<Card["id"][]>;
-  getPlayers?(o: { allCards: Card[] }): Promise<Player[]>;
+  specialRules?: SpecialRule[];
+  onAddElementsIntoBoard?: OnAddElementsIntoBoard;
 };
 
 type CreateGame = (o?: CreateGameOpts) => Promise<Game>;
 
-const createGame: CreateGame = () => {
+const createGame: CreateGame = async (opts = {}) => {
   const players: Player[] = [];
   const usedCards = defaultCards;
+  const specialRules = opts.specialRules || [];
 
   for (let playerId = 0; playerId < 2; playerId += 1) {
     const cards: CardReference[] = [];
@@ -35,60 +68,111 @@ const createGame: CreateGame = () => {
       const { item: newCard } = getRandomItem(usedCards);
 
       cards.push({
-        cardId: newCard.id,
-        cardCopyUid: createUUId()
+        cardCopyUid: createUUId(),
+        cardId: newCard.id
       });
     }
 
     players.push({
       allCards: cards,
       gameCards: cards,
-      id: playerId
+      id: playerId,
+      wonCards: []
     });
   }
 
-  const slots: BoardSlot[][] = [];
+  let board = createEmptyBoard();
 
-  for (let slotsRow = 0; slotsRow < 3; slotsRow += 1) {
-    const row: BoardSlot[] = [];
+  if (specialRules.includes(SpecialRule.Elemental)) {
+    const onAddElementsIntoBoard =
+      opts.onAddElementsIntoBoard || defaultOnAddElementsIntoBoard;
 
-    for (let slotsColumn = 0; slotsColumn < 3; slotsColumn += 1) {
-      row.push({
-        cardReference: null,
-        cardPlayer: null,
-        element: null
-      });
-    }
-
-    slots.push(row);
+    board = await onAddElementsIntoBoard(board);
   }
 
   const { item: firstPlayer } = getRandomItem(players);
   const turn = {
     playerId: firstPlayer.id
   };
-  const board = {
-    slots
-  };
   const phase = GamePhase.Playing;
 
-  const game = {
+  return {
     board,
     phase,
+    players,
+    specialRules,
+    tradeRule: TradeRule.One,
     turn,
-    usedCards,
-    players
+    usedCards
   };
-
-  return Promise.resolve(game);
 };
 
-type FinishGame = (g: Game) => Promise<Game>;
+const defaultOnWinnerChooseCards: OnWinnerChooseCards = async (
+  game,
+  { winnerPlayerId }
+) => {
+  const oppositePlayer = getOppositePlayer(game, winnerPlayerId);
+  const { gameCards } = oppositePlayer;
 
-const finishGame: FinishGame = game => {
+  let winnerCards: CardReference[] = [];
+  const loserCards: CardReference[] = [];
+
+  if (game.tradeRule === TradeRule.All) {
+    winnerCards = gameCards;
+  } else if (game.tradeRule === TradeRule.One) {
+    const { item: card } = getRandomItem(gameCards);
+    winnerCards = [card];
+  } else if (game.tradeRule === TradeRule.Direct) {
+    getFlatSlots(game.board.slots).forEach(flatSlot => {
+      const arr =
+        flatSlot.slot.cardPlayer === winnerPlayerId ? winnerCards : loserCards;
+
+      arr.push(flatSlot.slot.cardReference!);
+    });
+  } else if (game.tradeRule === TradeRule.Difference) {
+    const flatSlots = getFlatSlots(game.board.slots);
+    const winnerSlots = flatSlots.filter(
+      s => s.slot.cardPlayer === winnerPlayerId
+    );
+
+    let tmpCards = gameCards;
+    const diff = 5 - (flatSlots.length - winnerSlots.length);
+
+    for (let wonCardIdx = 0; wonCardIdx < diff; wonCardIdx += 1) {
+      const { item: card, newItems } = getRandomItem(tmpCards);
+
+      winnerCards.push(card);
+      tmpCards = newItems;
+    }
+  }
+
+  const extractCardCopyUid = (c: CardReference) => c.cardCopyUid;
+
+  return {
+    loserCards: loserCards.map(extractCardCopyUid),
+    winnerCards: winnerCards.map(extractCardCopyUid)
+  };
+};
+
+type FinishGame = (g: Game, opts: PlayTurnOpts) => Promise<Game>;
+
+const finishGame: FinishGame = async (game, opts) => {
+  const onWinnerChooseCards =
+    opts.onWinnerChooseCards || defaultOnWinnerChooseCards;
+
   const newGame = { ...game };
 
-  // > decide winner and allow to choose cards from opponent
+  const winnerPlayerId = getWinnerPlayerId(game.board.slots);
+
+  const { winnerCards, loserCards } = await onWinnerChooseCards(game, {
+    winnerPlayerId
+  });
+
+  game.players.forEach(p => {
+    const cards = p.id === winnerPlayerId ? winnerCards : loserCards;
+
+    p.wonCards = cards;
+  });
 
   newGame.phase = GamePhase.End;
 
@@ -98,14 +182,20 @@ const finishGame: FinishGame = game => {
 type OnChoosePlayerCard = (
   g: Game
 ) => Promise<{
-  position: {
-    row: number;
-    column: number;
-  };
+  position: SlotPosition;
   cardReference: CardReference;
 }>;
 
+type OnWinnerChooseCards = (
+  g: Game,
+  o: { winnerPlayerId: Player["id"] }
+) => Promise<{
+  winnerCards: CardCopyUid[];
+  loserCards: CardCopyUid[];
+}>;
+
 type PlayTurnOpts = {
+  onWinnerChooseCards?: OnWinnerChooseCards;
   onChoosePlayerCard?: OnChoosePlayerCard;
 };
 
@@ -123,11 +213,11 @@ const defaultOnChoosePlayerCard: OnChoosePlayerCard = game => {
   const chosenCard = currentPlayerAvailableCards[0]!;
 
   return Promise.resolve({
+    cardReference: chosenCard,
     position: {
-      row: emptyFlatSlot.row,
-      column: emptyFlatSlot.column
-    },
-    cardReference: chosenCard
+      column: emptyFlatSlot.column,
+      row: emptyFlatSlot.row
+    }
   });
 };
 
@@ -156,9 +246,16 @@ const applyCardFromPlayerMutating: ApplyCardFromPlayerMutating = async (
 
   const cardIdToCardMap = getCardIdToCardMap(game.usedCards);
 
+  const currentCard = cardIdToCardMap[addedCard.cardReference.cardId];
+  const currentCardRankOffset = getCardRankOffset(
+    game,
+    currentCard,
+    addedCard.position
+  );
+
   getSurrondingSlotsWithCards(game.board.slots, {
-    row: addedCard.position.row,
-    column: addedCard.position.column
+    column: addedCard.position.column,
+    row: addedCard.position.row
   }).forEach(flatSlot => {
     let anotherRankIndex = RankIndex.Right;
 
@@ -171,15 +268,18 @@ const applyCardFromPlayerMutating: ApplyCardFromPlayerMutating = async (
     }
 
     const currentCardRankIndex = oppositeRankIndexMap[anotherRankIndex];
-    const currentCard = cardIdToCardMap[addedCard.cardReference.cardId];
     const anotherCard = cardIdToCardMap[flatSlot.slot.cardReference!.cardId];
+    const { row, column } = flatSlot;
+
+    const anotherCardRankOffset = getCardRankOffset(game, anotherCard, {
+      column,
+      row
+    });
 
     if (
-      currentCard.ranks[currentCardRankIndex] >
-      anotherCard.ranks[anotherRankIndex]
+      currentCard.ranks[currentCardRankIndex] + currentCardRankOffset >
+      anotherCard.ranks[anotherRankIndex] + anotherCardRankOffset
     ) {
-      const { row, column } = flatSlot;
-
       game.board.slots[row][column] = {
         ...game.board.slots[row][column],
         cardPlayer: game.turn.playerId
@@ -192,8 +292,7 @@ type PlayTurn = (g: Game, o?: PlayTurnOpts) => Promise<Game>;
 
 const playTurn: PlayTurn = async (game, opts = {}) => {
   const newGame = { ...game, turn: { ...game.turn } };
-  const oppositePlayerId = game.players.find(p => p.id !== game.turn.playerId)!
-    .id;
+  const oppositePlayerId = getOppositePlayer(game, game.turn.playerId).id;
 
   newGame.board = {
     ...newGame.board,
@@ -201,7 +300,7 @@ const playTurn: PlayTurn = async (game, opts = {}) => {
   };
 
   if (getIsBoardFull(newGame.board)) {
-    return finishGame(newGame);
+    return finishGame(newGame, opts);
   }
 
   await applyCardFromPlayerMutating(newGame, opts);
@@ -209,10 +308,10 @@ const playTurn: PlayTurn = async (game, opts = {}) => {
   newGame.turn.playerId = oppositePlayerId;
 
   if (getIsBoardFull(newGame.board)) {
-    return finishGame(newGame);
+    return finishGame(newGame, opts);
   }
 
   return newGame;
 };
 
-export { createGame, playTurn, OnChoosePlayerCard };
+export { createGame, playTurn, OnChoosePlayerCard, OnWinnerChooseCards };

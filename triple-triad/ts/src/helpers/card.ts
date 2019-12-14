@@ -1,4 +1,4 @@
-import { RankIndex, Card } from "../constants";
+import { RankIndex, Card, Game, SlotPosition, SpecialRule } from "../constants";
 
 const oppositeRankIndexMap = {
   [RankIndex.Up]: RankIndex.Down,
@@ -19,4 +19,26 @@ const getCardIdToCardMap: GetCardIdToCardMap = usedCards => {
   }, {});
 };
 
-export { oppositeRankIndexMap, getCardIdToCardMap };
+type GetCardRankOffset = (
+  game: Game,
+  card: Card,
+  position: SlotPosition
+) => number;
+
+const getCardRankOffset: GetCardRankOffset = (game, card, position) => {
+  if (!game.specialRules.includes(SpecialRule.Elemental)) {
+    return 0;
+  }
+
+  const { element: slotElement } = game.board.slots[position.row][
+    position.column
+  ];
+
+  if (!slotElement) {
+    return 0;
+  }
+
+  return card.element === slotElement ? 1 : -1;
+};
+
+export { oppositeRankIndexMap, getCardIdToCardMap, getCardRankOffset };

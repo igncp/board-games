@@ -28,9 +28,14 @@ enum RankIndex {
   Left = 3
 }
 
+/**
+ * The Open and Random rules are delegated to the consumer client, so it is not
+ * necessary to be used in the code
+ */
 enum SpecialRule {
   Elemental = "Elemental",
   Open = "Open",
+  Random = "Random",
   Same = "Same"
 }
 

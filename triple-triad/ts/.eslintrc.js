@@ -4,6 +4,8 @@ module.exports = {
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:jest/recommended",
     "plugin:eslint-comments/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
     "plugin:@typescript-eslint/recommended"
   ],
   env: {
@@ -37,5 +39,14 @@ module.exports = {
     "require-atomic-updates": 0,
     semi: 2,
     "sort-keys": 2
-  }
+  },
+
+  overrides: [
+    {
+      files: ["**/simulations/**"],
+      rules: {
+        "no-console": 0
+      }
+    }
+  ]
 };

@@ -179,46 +179,55 @@ describe("playTurn", () => {
     expect(newGame.board.slots[1][1].cardReference).toEqual(cardReference);
   });
 
-  it("converts the card of the opposite player when necessary", async () => {
-    const game = await createGame();
+  [
+    { converts: true, rank: 2 },
+    { converts: false, rank: 1 }
+  ].forEach(({ converts, rank }) => {
+    it(`converts the card of the opposite player when necessary: ${converts}`, async () => {
+      const game = await createGame();
 
-    game.usedCards = game.usedCards.slice(0);
-    game.usedCards[0] = { ...game.usedCards[0], ranks: [1, 1, 1, 1] };
-    game.usedCards[1] = { ...game.usedCards[1], ranks: [2, 2, 2, 2] };
+      game.usedCards = game.usedCards.slice(0);
+      game.usedCards[0] = { ...game.usedCards[0], ranks: [1, 1, 1, 1] };
 
-    game.players[0].gameCards[0].cardId = game.usedCards[0].id;
-    game.players[1].gameCards[0].cardId = game.usedCards[1].id;
+      game.usedCards[1] = {
+        ...game.usedCards[1],
+        ranks: [rank, rank, rank, rank]
+      };
 
-    game.board.slots[1][1].cardReference = game.players[0].gameCards[0];
-    game.board.slots[1][1].cardPlayer = game.players[0].id;
+      game.players[0].gameCards[0].cardId = game.usedCards[0].id;
+      game.players[1].gameCards[0].cardId = game.usedCards[1].id;
 
-    game.turn.playerId = game.players[1].id;
+      game.board.slots[1][1].cardReference = game.players[0].gameCards[0];
+      game.board.slots[1][1].cardPlayer = game.players[0].id;
 
-    await Promise.all(
-      [
-        { column: 0, row: 1 },
-        { column: 1, row: 0 },
-        { column: 1, row: 2 },
-        { column: 2, row: 1 }
-      ].map(async position => {
-        const onChoosePlayerCard: OnChoosePlayerCard = () => {
-          return Promise.resolve({
-            cardReference: game.players[1].gameCards[0],
-            position
+      game.turn.playerId = game.players[1].id;
+
+      await Promise.all(
+        [
+          { column: 0, row: 1 },
+          { column: 1, row: 0 },
+          { column: 1, row: 2 },
+          { column: 2, row: 1 }
+        ].map(async position => {
+          const onChoosePlayerCard: OnChoosePlayerCard = () => {
+            return Promise.resolve({
+              cardReference: game.players[1].gameCards[0],
+              position
+            });
+          };
+
+          const newGame = await playTurn(game, {
+            onChoosePlayerCard
           });
-        };
 
-        const newGame = await playTurn(game, {
-          onChoosePlayerCard
-        });
+          expect(game.board.slots[1][1].cardPlayer).toEqual(game.players[0].id);
 
-        expect(game.board.slots[1][1].cardPlayer).toEqual(game.players[0].id);
-
-        expect(newGame.board.slots[1][1].cardPlayer).toEqual(
-          newGame.players[1].id
-        );
-      })
-    );
+          expect(newGame.board.slots[1][1].cardPlayer).toEqual(
+            newGame.players[converts ? 1 : 0].id
+          );
+        })
+      );
+    });
   });
 
   [0, 1].forEach(playerIdx => {

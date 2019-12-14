@@ -34,16 +34,18 @@ Implementation of the rules for FF VIII version.
 - [x] Trade Rules
 - Special rules
     - [x] Elemental
+    - [x] Random
+    - [x] Open
     - [ ] Rest
 - [ ] Regions (with special rules)
+- [ ] Simulations
+    - [x] Basic structure
+    - [ ] Easy declarative setup of initial cards
 
 ## TODO
 
 ### Features
 
-- Setup simulations?
-    - Random behavior for player A and a strategy for player B
-    - Easy declarative setup of initial cards
 - Periodic: Refactor tests
     - Use existing utils functions
     - Cover more edge cases (without greatly increasing code)

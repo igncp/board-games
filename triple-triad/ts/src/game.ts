@@ -49,9 +49,18 @@ const defaultOnAddElementsIntoBoard: OnAddElementsIntoBoard = board => {
   return Promise.resolve(newBoard);
 };
 
+type OnChooseFirstPlayer = (game: Game) => Promise<Player["id"]>;
+
+const defaultOnChooseFirstPlayer: OnChooseFirstPlayer = game => {
+  const { item: firstPlayer } = getRandomItem(game.players);
+
+  return Promise.resolve(firstPlayer.id);
+};
+
 type CreateGameOpts = {
-  specialRules?: SpecialRule[];
   onAddElementsIntoBoard?: OnAddElementsIntoBoard;
+  onChooseFirstPlayer?: OnChooseFirstPlayer;
+  specialRules?: SpecialRule[];
 };
 
 type CreateGame = (o?: CreateGameOpts) => Promise<Game>;
@@ -90,13 +99,12 @@ const createGame: CreateGame = async (opts = {}) => {
     board = await onAddElementsIntoBoard(board);
   }
 
-  const { item: firstPlayer } = getRandomItem(players);
   const turn = {
-    playerId: firstPlayer.id
+    playerId: players[0].id
   };
   const phase = GamePhase.Playing;
 
-  return {
+  const game = {
     board,
     phase,
     players,
@@ -105,6 +113,14 @@ const createGame: CreateGame = async (opts = {}) => {
     turn,
     usedCards
   };
+
+  const onChooseFirstPlayer =
+    opts.onChooseFirstPlayer || defaultOnChooseFirstPlayer;
+  const firstPlayerId = await onChooseFirstPlayer(game);
+
+  game.turn.playerId = firstPlayerId;
+
+  return game;
 };
 
 const defaultOnWinnerChooseCards: OnWinnerChooseCards = async (
@@ -202,7 +218,7 @@ type PlayTurnOpts = {
 const defaultOnChoosePlayerCard: OnChoosePlayerCard = game => {
   const flatSlots = getFlatSlots(game.board.slots);
   const emptyFlatSlots = flatSlots.filter(s => s.slot.cardPlayer === null);
-  const emptyFlatSlot = emptyFlatSlots[0]!;
+  const { item: emptyFlatSlot } = getRandomItem(emptyFlatSlots);
 
   const boardCards = flatSlots
     .filter(s => s.slot.cardReference !== null)
@@ -257,6 +273,10 @@ const applyCardFromPlayerMutating: ApplyCardFromPlayerMutating = async (
     column: addedCard.position.column,
     row: addedCard.position.row
   }).forEach(flatSlot => {
+    if (flatSlot.slot.cardPlayer === game.turn.playerId) {
+      return;
+    }
+
     let anotherRankIndex = RankIndex.Right;
 
     if (flatSlot.row < addedCard.position.row) {

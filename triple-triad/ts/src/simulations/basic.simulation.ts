@@ -1,19 +1,9 @@
 import { createGame, playTurn, GamePhase } from "..";
 import { Game, Board } from "../constants";
 
+import { getBoardStr } from '../helpers/debug'
+
 const RUNS_NUM = 10 * 1000;
-
-type GetBoardStr = (b: Board) => string;
-
-const getBoardStr: GetBoardStr = b => {
-  return b.slots
-    .map(boardRow => {
-      return boardRow
-        .map(r => (r.cardPlayer === null ? "_" : r.cardPlayer))
-        .join("|");
-    })
-    .join("\n");
-};
 
 type GetBreakCondition = (g: Game) => boolean;
 

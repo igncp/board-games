@@ -7,9 +7,11 @@ import {
   GamePhase,
   Player,
   RankIndex,
+  Region,
   SlotPosition,
   SpecialRule,
-  TradeRule
+  TradeRule,
+  regionToSpecialRulesMap
 } from "./constants";
 import defaultCards from "./defaultCards";
 import { getRandomItem, createUUId } from "./utils";
@@ -60,7 +62,22 @@ const defaultOnChooseFirstPlayer: OnChooseFirstPlayer = game => {
 type CreateGameOpts = {
   onAddElementsIntoBoard?: OnAddElementsIntoBoard;
   onChooseFirstPlayer?: OnChooseFirstPlayer;
+  region?: Region;
   specialRules?: SpecialRule[];
+};
+
+type DecideSpecialRules = (o: CreateGameOpts) => SpecialRule[];
+
+const decideSpecialRules: DecideSpecialRules = opts => {
+  if (opts.specialRules) {
+    return opts.specialRules;
+  }
+
+  if (opts.region && regionToSpecialRulesMap[opts.region]) {
+    return regionToSpecialRulesMap[opts.region];
+  }
+
+  return [];
 };
 
 type CreateGame = (o?: CreateGameOpts) => Promise<Game>;
@@ -68,7 +85,7 @@ type CreateGame = (o?: CreateGameOpts) => Promise<Game>;
 const createGame: CreateGame = async (opts = {}) => {
   const players: Player[] = [];
   const usedCards = defaultCards;
-  const specialRules = opts.specialRules || [];
+  const specialRules = decideSpecialRules(opts);
 
   for (let playerId = 0; playerId < 2; playerId += 1) {
     const cards: CardReference[] = [];
@@ -334,4 +351,10 @@ const playTurn: PlayTurn = async (game, opts = {}) => {
   return newGame;
 };
 
-export { createGame, playTurn, OnChoosePlayerCard, OnWinnerChooseCards };
+export {
+  CreateGameOpts,
+  OnChoosePlayerCard,
+  OnWinnerChooseCards,
+  createGame,
+  playTurn
+};

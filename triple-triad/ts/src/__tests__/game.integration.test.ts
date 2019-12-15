@@ -1,15 +1,21 @@
 import {
   CardElement,
   GamePhase,
+  Region,
   SpecialRule,
   TradeRule,
+  boardHelpers,
   createGame,
   defaultCards,
   playTurn,
-  boardHelpers
+  regionToSpecialRulesMap
 } from "..";
 import { Game, Player, CardReference } from "../constants";
-import { OnChoosePlayerCard, OnWinnerChooseCards } from "../game";
+import {
+  OnChoosePlayerCard,
+  OnWinnerChooseCards,
+  CreateGameOpts
+} from "../game";
 import { mockMathRandomAlternate } from "../testUtils";
 
 const { getFlatSlots } = boardHelpers;
@@ -334,6 +340,25 @@ describe("playTurn", () => {
           );
         });
       });
+    });
+  });
+
+  describe("region", () => {
+    it("can be used on game creation to setup the special rules (if not passed)", () => {
+      const expectations: [CreateGameOpts, SpecialRule[]][] = [
+        [{}, []],
+        [{ specialRules: [SpecialRule.Open] }, [SpecialRule.Open]],
+        [{ region: Region.Centra }, regionToSpecialRulesMap[Region.Centra]],
+        [{ region: "unexisting-region" as Region }, []]
+      ];
+
+      return Promise.all(
+        expectations.map(async ([opts, expectedSpecialRules]) => {
+          const game = await createGame(opts);
+
+          expect(game.specialRules).toEqual(expectedSpecialRules);
+        })
+      );
     });
   });
 

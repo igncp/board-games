@@ -35,8 +35,11 @@ enum RankIndex {
 enum SpecialRule {
   Elemental = "Elemental",
   Open = "Open",
+  Plus = "Plus",
   Random = "Random",
-  Same = "Same"
+  Same = "Same",
+  SameWall = "SameWall",
+  SuddenDeath = "SuddenDeath"
 }
 
 enum TradeRule {
@@ -72,7 +75,7 @@ type Board = {
 };
 
 type Turn = {
-  playerId: Player["id"];
+  playerId: PlayerId;
 };
 
 enum GamePhase {
@@ -95,6 +98,37 @@ type SlotPosition = {
   column: number;
 };
 
+enum Region {
+  Balamb = "Balamb",
+  Centra = "Centra",
+  Dollet = "Dollet",
+  Esthar = "Esthar",
+  FH = "FH",
+  Galbadia = "Galbadia",
+  Lunar = "Lunar",
+  Trabia = "Trabia"
+}
+
+type RegionToSpecialRulesMap = { [str in Region]: SpecialRule[] };
+
+const regionToSpecialRulesMap: RegionToSpecialRulesMap = {
+  [Region.Balamb]: [SpecialRule.Open],
+  [Region.Centra]: [SpecialRule.Same, SpecialRule.Plus, SpecialRule.Random],
+  [Region.Dollet]: [SpecialRule.Random, SpecialRule.Elemental],
+  [Region.Esthar]: [SpecialRule.Elemental, SpecialRule.SameWall],
+  [Region.FH]: [SpecialRule.Elemental, SpecialRule.SuddenDeath],
+  [Region.Galbadia]: [SpecialRule.Same],
+  [Region.Lunar]: [
+    SpecialRule.Same,
+    SpecialRule.Plus,
+    SpecialRule.Elemental,
+    SpecialRule.SameWall,
+    SpecialRule.Random,
+    SpecialRule.SuddenDeath
+  ],
+  [Region.Trabia]: [SpecialRule.Random, SpecialRule.Plus]
+};
+
 export {
   Board,
   BoardSlot,
@@ -107,7 +141,9 @@ export {
   GamePhase,
   Player,
   RankIndex,
+  Region,
   SlotPosition,
   SpecialRule,
-  TradeRule
+  TradeRule,
+  regionToSpecialRulesMap
 };

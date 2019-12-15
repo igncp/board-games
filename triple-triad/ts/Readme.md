@@ -37,7 +37,7 @@ Implementation of the rules for FF VIII version.
     - [x] Random
     - [x] Open
     - [ ] Rest
-- [ ] Regions (with special rules)
+- [x] Regions (with special rules)
 - [ ] Simulations
     - [x] Basic structure
     - [ ] Easy declarative setup of initial cards

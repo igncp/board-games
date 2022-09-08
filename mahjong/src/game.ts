@@ -15,38 +15,78 @@ enum RoundType {
 
 type Player = {
   id: string;
+  name: string;
+};
+
+type HandTile = {
+  concealed: boolean;
+  id: Tile["id"];
+  setId: number | null;
 };
 
 type Table = {
   board: Tile["id"][];
   drawWall: Tile["id"][];
-  hands: Record<Player["id"], Tile["id"][]>;
+  hands: Record<Player["id"], HandTile[]>;
 };
+
+export enum GamePhase {
+  Beginning = "beginning",
+  End = "end",
+  Playing = "playing",
+}
 
 // http://mahjongtime.com/Chinese-Official-Mahjong-Scoring.html
 type Score = Record<Player["id"], number>;
 
-type Game = {
-  deck: Deck;
+type Round = {
+  type: RoundType;
+  playerIndex: number;
+};
+
+export const getCurrentPlayer = ({
+  round,
+  players,
+}: {
+  round: Round;
   players: Player[];
-  round: RoundType;
+}) => {
+  return players[round.playerIndex] as Player;
+};
+
+export type Game = {
+  deck: Deck;
+  phase: GamePhase;
+  players: Player[];
+  round: Round;
   score: Score;
   table: Table;
 };
 
-const createPlayer = (): Player => {
+const defaultCreatePlayer = (_: unknown, index: number): Player => {
   const id = Math.random().toString();
-  return { id };
+  return { id, name: "Player " + (index + 1) };
 };
 
-const createGame = (opts: Partial<{ deck: Deck }> = {}): Game => {
-  const players = Array.from({ length: 4 }).map(createPlayer);
+export const convertToHandTile = (id: Tile["id"]) => {
+  return {
+    concealed: true,
+    id,
+    setId: null,
+  };
+};
+
+const createGame = (
+  opts: Partial<{ deck: Deck; players: Player[] }> = {}
+): Game => {
+  const players =
+    opts.players || Array.from({ length: 4 }).map(defaultCreatePlayer);
 
   const deck = opts.deck || getDefaultDeck();
   const shuffledDeck = getShuffledArray(Object.keys(deck).map(Number));
 
   const hands = players.reduce((handsAcc, player) => {
-    handsAcc[player.id] = shuffledDeck.splice(0, 13);
+    handsAcc[player.id] = shuffledDeck.splice(0, 13).map(convertToHandTile);
 
     return handsAcc;
   }, {} as Game["table"]["hands"]);
@@ -63,12 +103,20 @@ const createGame = (opts: Partial<{ deck: Deck }> = {}): Game => {
     hands,
   };
 
+  const phase = GamePhase.Beginning;
+
+  const round = {
+    playerIndex: 0,
+    type: RoundType.East,
+  };
+
   return {
     deck,
-    table,
+    phase,
     players,
-    round: RoundType.East,
+    round,
     score,
+    table,
   };
 };
 
@@ -87,9 +135,13 @@ const drawTileFromWall = ({
 
   const tileId = drawWall.pop() as number;
 
-  hands[playerId].push(tileId);
+  hands[playerId].push(convertToHandTile(tileId));
 
   return tileId;
 };
 
-export { createGame, drawTileFromWall };
+const startGame = (game: Game) => {
+  game.phase = GamePhase.Playing;
+};
+
+export { createGame, drawTileFromWall, startGame };

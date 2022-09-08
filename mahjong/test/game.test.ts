@@ -1,4 +1,9 @@
-import { createGame, drawTileFromWall } from "../src/game";
+import {
+  convertToHandTile,
+  createGame,
+  drawTileFromWall,
+  getCurrentPlayer,
+} from "../src/game";
 
 describe("createGame", () => {
   test("Has 4 players", () => {
@@ -45,7 +50,10 @@ describe("createGame", () => {
 describe("drawTileFromWall", () => {
   test("Moves the last tile into the expected hand", () => {
     const drawWall = [3, 4, 5];
-    const hands = { playerA: [1], playerB: [2] };
+    const hands = {
+      playerA: [1].map(convertToHandTile),
+      playerB: [2].map(convertToHandTile),
+    };
     const drawnTile = drawTileFromWall({
       hands,
       playerId: "playerA",
@@ -53,13 +61,19 @@ describe("drawTileFromWall", () => {
     });
 
     expect(drawWall).toEqual([3, 4]);
-    expect(hands).toEqual({ playerA: [1, 5], playerB: [2] });
+    expect(hands).toEqual({
+      playerA: [1, 5].map(convertToHandTile),
+      playerB: [2].map(convertToHandTile),
+    });
     expect(drawnTile).toEqual(5);
   });
 
   test("Returns null when the wall is empty", () => {
     const drawWall = [] as number[];
-    const hands = { playerA: [1], playerB: [2] };
+    const hands = {
+      playerA: [1].map(convertToHandTile),
+      playerB: [2].map(convertToHandTile),
+    };
     const drawnTile = drawTileFromWall({
       hands,
       playerId: "playerA",
@@ -67,7 +81,19 @@ describe("drawTileFromWall", () => {
     });
 
     expect(drawWall).toEqual([]);
-    expect(hands).toEqual({ playerA: [1], playerB: [2] });
+    expect(hands).toEqual({
+      playerA: [1].map(convertToHandTile),
+      playerB: [2].map(convertToHandTile),
+    });
     expect(drawnTile).toEqual(null);
+  });
+});
+
+describe("getCurrentPlayer", () => {
+  test("Returns the expected player object", () => {
+    const game = createGame();
+    game.round.playerIndex = 2;
+    const player = getCurrentPlayer(game);
+    expect(player.name).toEqual("Player 3");
   });
 });

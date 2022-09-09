@@ -5,7 +5,9 @@
   "description": "",
   "scripts": {
     "cli": "ts-node ./guis/cli/mahjong.ts",
-    "test": "jest test --verbose"
+    "test": "npm run test:ts && npm run test:jest",
+    "test:jest": "jest test --verbose",
+    "test:ts": "tsc --noEmit --project ."
   },
   "keywords": [],
   "author": "",

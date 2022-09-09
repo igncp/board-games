@@ -2,16 +2,10 @@
 // http://mahjong.wikidot.com/
 // https://en.wikipedia.org/wiki/Mahjong_tiles
 
+import { createRound, GamePhase, Round } from "./round";
 import type { Deck, Tile } from "./tiles";
 import { getDefaultDeck } from "./tiles";
 import { getShuffledArray } from "./util";
-
-enum RoundType {
-  East = "east",
-  North = "north",
-  South = "south",
-  West = "west",
-}
 
 type Player = {
   id: string;
@@ -30,19 +24,8 @@ type Table = {
   hands: Record<Player["id"], HandTile[]>;
 };
 
-export enum GamePhase {
-  Beginning = "beginning",
-  End = "end",
-  Playing = "playing",
-}
-
 // http://mahjongtime.com/Chinese-Official-Mahjong-Scoring.html
 type Score = Record<Player["id"], number>;
-
-type Round = {
-  type: RoundType;
-  playerIndex: number;
-};
 
 export const getCurrentPlayer = ({
   round,
@@ -105,10 +88,7 @@ const createGame = (
 
   const phase = GamePhase.Beginning;
 
-  const round = {
-    playerIndex: 0,
-    type: RoundType.East,
-  };
+  const round = createRound();
 
   return {
     deck,

@@ -1,29 +1,10 @@
 import { Prompt } from "./utils";
+import { createGame, GamePhase } from "../../src/game";
 import {
-  createGame,
-  Game,
-  GamePhase,
-  getCurrentPlayer,
-  startGame,
-} from "../../src/game";
-
-type Texts = {
-  phase: Record<GamePhase, string>;
-};
-
-const texts: Texts = {
-  phase: {
-    [GamePhase.Beginning]: "Beginning",
-    [GamePhase.End]: "Finished",
-    [GamePhase.Playing]: "During play",
-  },
-};
-
-const getGameShortSummary = (game: Game) => {
-  return ["Game Info", "=========", "Phase: " + texts.phase[game.phase]].join(
-    "\n"
-  );
-};
+  handleGetPlayer,
+  handleShowGameSummary,
+  handleStartGame,
+} from "./handlers";
 
 export const startCLIGame = async () => {
   const prompt = new Prompt();
@@ -40,8 +21,8 @@ export const startCLIGame = async () => {
     switch (nextStep) {
       case "h": {
         const gameHelp = [
-          "s: Stop the game.",
-          "h: Print this help.",
+          "s: Stop the game",
+          "h: Print this help",
           "p: Print game short summary",
           ...(game.phase === GamePhase.Beginning ? ["b: Begin the game"] : []),
           ...(game.phase === GamePhase.Playing
@@ -60,7 +41,7 @@ export const startCLIGame = async () => {
         break;
       }
       case "p": {
-        console.log(getGameShortSummary(game));
+        handleShowGameSummary(game);
         break;
       }
       default: {
@@ -68,8 +49,7 @@ export const startCLIGame = async () => {
           case GamePhase.Beginning: {
             switch (nextStep) {
               case "b": {
-                startGame(game);
-                console.log("Game started");
+                handleStartGame(game);
                 break;
               }
               default: {
@@ -82,14 +62,7 @@ export const startCLIGame = async () => {
           case GamePhase.Playing: {
             switch (nextStep) {
               case "player": {
-                const player = getCurrentPlayer(game);
-                console.log(
-                  "The current player is: " +
-                    player.name +
-                    " (" +
-                    player.id +
-                    ")"
-                );
+                handleGetPlayer(game);
                 break;
               }
               default: {

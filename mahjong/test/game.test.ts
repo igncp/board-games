@@ -1,9 +1,11 @@
 import {
   convertToHandTile,
   createGame,
+  discardTileToBoard,
   drawTileFromWall,
   getCurrentPlayer,
 } from "../src/game";
+import { createRound } from "../src/round";
 
 describe("createGame", () => {
   test("Has 4 players", () => {
@@ -54,8 +56,10 @@ describe("drawTileFromWall", () => {
       playerA: [1].map(convertToHandTile),
       playerB: [2].map(convertToHandTile),
     };
+    const round = createRound();
     const drawnTile = drawTileFromWall({
       hands,
+      round,
       playerId: "playerA",
       drawWall,
     });
@@ -66,6 +70,7 @@ describe("drawTileFromWall", () => {
       playerB: [2].map(convertToHandTile),
     });
     expect(drawnTile).toEqual(5);
+    expect(round.wallTileDrawn).toEqual(true);
   });
 
   test("Returns null when the wall is empty", () => {
@@ -74,10 +79,12 @@ describe("drawTileFromWall", () => {
       playerA: [1].map(convertToHandTile),
       playerB: [2].map(convertToHandTile),
     };
+    const round = createRound();
     const drawnTile = drawTileFromWall({
+      drawWall,
       hands,
       playerId: "playerA",
-      drawWall,
+      round,
     });
 
     expect(drawWall).toEqual([]);
@@ -86,6 +93,36 @@ describe("drawTileFromWall", () => {
       playerB: [2].map(convertToHandTile),
     });
     expect(drawnTile).toEqual(null);
+    expect(round.wallTileDrawn).toEqual(false);
+  });
+});
+
+describe("discardTileToBoard", () => {
+  test("Moves the selected tile into the board", () => {
+    const board = [16, 17, 18];
+    const hands = {
+      playerA: Array.from({ length: 14 })
+        .map((_, index) => index + 1)
+        .map(convertToHandTile),
+      playerB: [15].map(convertToHandTile),
+    };
+
+    const discardedTile = discardTileToBoard({
+      board,
+      hands,
+      playerId: "playerA",
+      tileIndex: 1,
+    });
+
+    expect(board).toEqual([16, 17, 18, 2]);
+    expect(hands).toEqual({
+      playerA: Array.from({ length: 14 })
+        .map((_, index) => index + 1)
+        .filter((id) => id !== 2)
+        .map(convertToHandTile),
+      playerB: [15].map(convertToHandTile),
+    });
+    expect(discardedTile).toEqual(2);
   });
 });
 

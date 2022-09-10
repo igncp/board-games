@@ -1,4 +1,4 @@
-enum TileType {
+export enum TileType {
   Suit = "suit",
   Wind = "wind",
   Dragon = "dragon",
@@ -6,14 +6,14 @@ enum TileType {
   Season = "season",
 }
 
-enum Flower {
+export enum Flower {
   Bamboo = "bamboo",
   Chrysanthemum = "chrysanthemum",
   Orchid = "orchid",
   Plum = "plum",
 }
 
-enum Season {
+export enum Season {
   Autumn = "autumn",
   Spring = "spring",
   Summer = "summer",
@@ -73,10 +73,10 @@ export type SeasonTile = BaseTile & {
 
 export type Tile = SuitTile | WindTile | DragonTile | FlowerTile | SeasonTile;
 
-type Deck = Record<Tile["id"], Tile>;
+export type Deck = Record<Tile["id"], Tile>;
 type TileWithoutId = Omit<Tile, "id">;
 
-const getDefaultDeck = (): Deck => {
+export const getDefaultDeck = (): Deck => {
   return Array.from({ length: 4 })
     .reduce(
       (deck: TileWithoutId[]) => {
@@ -137,4 +137,20 @@ const getDefaultDeck = (): Deck => {
     }, {} as Deck);
 };
 
-export { getDefaultDeck, Deck, TileType };
+export const getIsSuitTile = (tile: Tile): tile is SuitTile => {
+  return tile.type === TileType.Suit && "suit" in tile;
+};
+
+export const getIsHonorTile = (tile: Tile): tile is WindTile | DragonTile => {
+  return tile.type === TileType.Dragon || tile.type === TileType.Wind;
+};
+
+export const getIsBonusTile = (tile: Tile): tile is FlowerTile | SeasonTile => {
+  return tile.type === TileType.Flower || tile.type === TileType.Season;
+};
+
+export type HandTile = {
+  concealed: boolean;
+  id: Tile["id"];
+  setId: string | null;
+};

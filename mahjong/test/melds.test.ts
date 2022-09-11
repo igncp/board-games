@@ -1,6 +1,10 @@
-import { getIsChow, getIsPung } from "../src/melds";
+import { getIsChow, getIsPung, getPossibleMelds } from "../src/melds";
 import { Deck } from "../src/tiles";
-import { chowTilesFixture, pungTilesFixture } from "./melds.testData";
+import {
+  chowTilesFixture,
+  possibleMeldsFixture,
+  pungTilesFixture,
+} from "./melds.testData";
 
 describe("getIsPung", () => {
   test.each(pungTilesFixture)(
@@ -32,6 +36,17 @@ describe("getIsChow", () => {
       const subHand = tilesWithId.map((t) => t.id);
 
       expect(getIsChow({ subHand, deck, boardTilePlayerDiff })).toEqual(isChow);
+    }
+  );
+});
+
+describe("getPossibleMelds", () => {
+  test.each(possibleMeldsFixture)(
+    "Returns the expected result on combinations: %#",
+    (hand, round, deck, boardTilePlayerDiff, expectedResult) => {
+      expect(
+        getPossibleMelds({ hand, round, boardTilePlayerDiff, deck })
+      ).toEqual(expectedResult);
     }
   );
 });

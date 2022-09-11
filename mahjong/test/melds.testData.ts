@@ -1,4 +1,13 @@
-import { Suit, TileType, Tile, Wind, Flower } from "../src/tiles";
+import { createRound, Round } from "../src/round";
+import {
+  Suit,
+  TileType,
+  Tile,
+  Wind,
+  Flower,
+  HandTile,
+  Deck,
+} from "../src/tiles";
 
 export const pungTilesFixture = [
   [
@@ -62,6 +71,24 @@ export const pungTilesFixture = [
     }),
     false,
   ],
+  [
+    [
+      {
+        type: TileType.Wind,
+        value: Wind.West,
+      },
+      {
+        type: TileType.Wind,
+        value: Wind.West,
+      },
+      {
+        suit: Suit.Dots,
+        type: TileType.Suit,
+        value: 7,
+      },
+    ],
+    false,
+  ],
 ] as [[Tile, Tile, Tile], boolean][];
 
 export const chowTilesFixture = [
@@ -102,3 +129,33 @@ export const chowTilesFixture = [
     null,
   ],
 ] as [[Tile, Tile, Tile], boolean, number | null][];
+
+export const possibleMeldsFixture = [
+  [
+    Array.from({ length: 4 }).map((_, id) => {
+      return {
+        concealed: true,
+        id,
+        setId: null,
+      };
+    }),
+    createRound(),
+    Array.from({ length: 4 }).reduce<Deck>((acc, _, id) => {
+      acc[id] = {
+        id,
+        suit: Suit.Dots,
+        type: TileType.Suit,
+        value: 2,
+      };
+      return acc;
+    }, {} as Deck),
+    0,
+    [
+      [0, 1, 2],
+      [0, 1, 2, 3],
+      [0, 1, 3],
+      [0, 2, 3],
+      [1, 2, 3],
+    ],
+  ],
+] as [HandTile[], Round, Deck, number, number[][]][];

@@ -2,9 +2,12 @@ import { program } from "commander";
 import { startCLIGame } from "./gameLoop";
 
 const main = () => {
-  program.command("start").action(() => {
-    startCLIGame();
-  });
+  program
+    .command("start")
+    .option("-e, --exported", "Use exported data")
+    .action((options) => {
+      startCLIGame(options.exported);
+    });
 
   program.parse();
 

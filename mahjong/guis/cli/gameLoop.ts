@@ -2,6 +2,7 @@ import { Prompt } from "./utils";
 import { createGame } from "../../src/game";
 import {
   handleClaimTile,
+  handleCreateMeld,
   handleDiscardTile,
   handleDisplayBoard,
   handleDrawTile,
@@ -10,20 +11,28 @@ import {
   handleImportGame,
   handleListHand,
   handleMovePlayer,
+  handleNextCombined,
+  handlePossibleMelds,
   handleShowGameSummary,
   handleSortHand,
   handleStartGame,
 } from "./handlers";
 import { GamePhase } from "../../src/round";
+import { getHelpStr } from "./help";
 
-export const startCLIGame = async () => {
+export const startCLIGame = async (useExported: boolean) => {
   const prompt = new Prompt();
   const game = createGame();
 
+  if (useExported) {
+    handleImportGame(game);
+  }
+
   while (true) {
     const input = (await prompt.prompt(
-      "\nWhat to do next? Input 'h' to show options.\n"
+      "\n\nWhat to do next? Input 'h' to show options.\n"
     )) as string;
+    console.clear();
     const [nextStep] = input.split(" ");
 
     let breakLoop = false;
@@ -39,31 +48,7 @@ export const startCLIGame = async () => {
         break;
       }
       case "h": {
-        const gameHelp = [
-          "e: Exports the game state",
-          "h: Print this help",
-          "i: Imports the game state",
-          "p: Print game short summary",
-          "s: Stop the game",
-          ...(game.phase === GamePhase.Beginning ? ["b: Begin the game"] : []),
-          ...(game.phase === GamePhase.Playing
-            ? [
-                "board: List the tiles in the board",
-                "claim <player-index>: Claim the last tile from the board",
-                "discard <tile-index>: Discard a tile for the player when having 14",
-                "draw: Draw a tile for the player from the tiles wall",
-                "hand [player-index]: List the hand of a player (by default current)",
-                "hd [player-index]: Pretty-print the hand of a player (by default current)",
-                "n: Move to the next player",
-                "player: Get the current player",
-                "ss [player-index]: Sort hand of player by suit",
-              ]
-            : []),
-        ]
-          .map((l) => "- " + l)
-          .sort()
-          .join("\n");
-
+        const gameHelp = getHelpStr(game);
         console.log(gameHelp);
         break;
       }
@@ -92,7 +77,7 @@ export const startCLIGame = async () => {
           }
           case GamePhase.Playing: {
             switch (nextStep) {
-              case "board": {
+              case "bo": {
                 handleDisplayBoard(game);
                 break;
               }
@@ -100,7 +85,11 @@ export const startCLIGame = async () => {
                 handleClaimTile(input, game);
                 break;
               }
-              case "discard": {
+              case "cm": {
+                handleCreateMeld(input, game);
+                break;
+              }
+              case "di": {
                 handleDiscardTile(input, game);
                 break;
               }
@@ -120,8 +109,16 @@ export const startCLIGame = async () => {
                 handleMovePlayer(game);
                 break;
               }
+              case "nds": {
+                handleNextCombined(game);
+                break;
+              }
               case "player": {
                 handleGetPlayer(game);
+                break;
+              }
+              case "pm": {
+                handlePossibleMelds(game);
                 break;
               }
               case "ss": {

@@ -49,7 +49,7 @@ export const convertToHandTile = (id: Tile["id"]) => {
   };
 };
 
-const createGame = (
+export const createGame = (
   opts: Partial<{ deck: Deck; players: Player[] }> = {}
 ): Game => {
   const players =
@@ -90,7 +90,7 @@ const createGame = (
   };
 };
 
-const drawTileFromWall = ({
+export const drawTileFromWall = ({
   drawWall,
   hands,
   round,
@@ -101,41 +101,48 @@ const drawTileFromWall = ({
   round: Round;
   playerId: Player["id"];
 }) => {
-  if (!drawWall.length || round.wallTileDrawn) {
+  if (!drawWall.length || round.wallTileDrawn !== null) {
     return null;
   }
 
   const tileId = drawWall.pop() as number;
 
-  round.wallTileDrawn = true;
+  round.wallTileDrawn = tileId;
   hands[playerId].push(convertToHandTile(tileId));
 
   return tileId;
 };
 
-const discardTileToBoard = ({
+export const discardTileToBoard = ({
   board,
   hands,
   playerId,
-  tileIndex,
+  tileId,
+  round,
 }: {
   board: Table["board"];
   hands: Table["hands"];
   playerId: Player["id"];
-  tileIndex: number;
+  tileId: Tile["id"];
+  round: Round;
 }) => {
   const playerHand = hands[playerId];
 
   if (playerHand.length !== 14) return null;
 
+  const tileIndex = playerHand.findIndex((t) => t.id === tileId);
   const tile = playerHand[tileIndex];
 
   if (!tile) return null;
-
   if (!tile.concealed) return null;
 
+  if (playerId === round.tileClaimed?.by && tile.id !== round.tileClaimed.id)
+    return null;
+
   playerHand.splice(tileIndex, 1);
+
   board.push(tile.id);
+  round.tileClaimed = { from: playerId, id: tile.id, by: null };
 
   return tile.id;
 };
@@ -153,24 +160,23 @@ export const claimTile = ({
 }) => {
   const playerHand = hands[playerId];
 
-  if (playerHand.length !== 13) return null;
+  if (playerHand.length !== 13 || !round.tileClaimed) return null;
 
   const tile = board.pop();
 
   if (!tile) return null;
 
-  round.tileClaimedBy = playerId;
+  round.tileClaimed.by = playerId;
 
-  // This will have to assign a set
   playerHand.push({
-    concealed: false,
+    concealed: true,
     id: tile,
     setId: null,
   });
+
+  return true;
 };
 
-const startGame = (game: Game) => {
+export const startGame = (game: Game) => {
   game.phase = GamePhase.Playing;
 };
-
-export { createGame, discardTileToBoard, drawTileFromWall, startGame };

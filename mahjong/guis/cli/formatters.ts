@@ -26,7 +26,7 @@ export const formatToEmoji = (tile: Tile) => {
     return "💮" + initial;
   }
   if (tile.type === TileType.Season) {
-    return "❄️" + initial;
+    return "🌞" + initial;
   }
 
   return JSON.stringify(tile);

@@ -8,6 +8,7 @@ import {
   getIsBonusTile,
   getIsHonorTile,
   getIsSuitTile,
+  sortTileByValue,
 } from "./tiles";
 import { Round } from "./round";
 import { Player } from "./player";
@@ -32,8 +33,9 @@ export const getIsPung = ({ subHand, deck }: SetCheckOpts) => {
 
     if (
       getIsSuitTile(tile) &&
-      getIsSuitTile(lastTile) &&
-      (lastTile.suit !== tile.suit || lastTile.value !== tile.value)
+      (!getIsSuitTile(lastTile) ||
+        lastTile.suit !== tile.suit ||
+        lastTile.value !== tile.value)
     ) {
       return false;
     }
@@ -66,11 +68,12 @@ export const getIsChow = ({
   if (typeof boardTilePlayerDiff === "number" && boardTilePlayerDiff !== -1)
     return false;
 
-  let lastTileId = subHand[0];
+  const subHandSorted = subHand.map((h) => deck[h]).sort(sortTileByValue);
+
+  let lastTileId = subHandSorted[0].id;
   for (let tileIndex = 1; tileIndex < 3; tileIndex += 1) {
-    const tileId = subHand[tileIndex];
     const lastTile = deck[lastTileId] as SuitTile;
-    const tile = deck[tileId];
+    const tile = subHandSorted[tileIndex];
 
     if (
       !tile ||
@@ -88,11 +91,40 @@ export const getIsChow = ({
 };
 
 // - Kong: http://mahjong.wikidot.com/kong
-export const getIsKong = ({ subHand }: SetCheckOpts) => {
+export const getIsKong = ({ subHand, deck }: SetCheckOpts) => {
   if (subHand?.length !== 4) return false;
 
-  // @TODO
-  return false;
+  let lastTileId = subHand[0];
+  for (let tileIndex = 1; tileIndex < 4; tileIndex += 1) {
+    const tileId = subHand[tileIndex];
+    const lastTile = deck[lastTileId];
+    const tile = deck[tileId];
+
+    if (!tile) return false;
+
+    if (
+      getIsSuitTile(tile) &&
+      getIsSuitTile(lastTile) &&
+      (lastTile.suit !== tile.suit || lastTile.value !== tile.value)
+    ) {
+      return false;
+    }
+
+    if (
+      getIsHonorTile(tile) &&
+      (lastTile.value !== tile.value || lastTile.type !== tile.type)
+    ) {
+      return false;
+    }
+
+    if (getIsBonusTile(tile)) {
+      return false;
+    }
+
+    lastTileId = tile.id;
+  }
+
+  return true;
 };
 
 const getRandomUUID = () => {
@@ -101,6 +133,31 @@ const getRandomUUID = () => {
       v = c == "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+};
+
+export const getBoardTilePlayerDiff = ({
+  hand,
+  players,
+  round,
+  playerId,
+}: {
+  hand: HandTile[];
+  playerId: Player["id"];
+  players: Player[];
+  round: Round;
+}) => {
+  const { tileClaimed } = round;
+  if (tileClaimed?.by) {
+    if (!hand.some((h) => h.id === tileClaimed.id)) return null;
+
+    const playerIndex = players.findIndex((p) => p.id === playerId);
+    const otherPlayerIndex = players.findIndex(
+      (p) => p.id === tileClaimed.from
+    );
+
+    return playerIndex - otherPlayerIndex;
+  }
+  return null;
 };
 
 export const createMeld = ({
@@ -116,21 +173,16 @@ export const createMeld = ({
   round: Round;
   subHand: HandTile[];
 }) => {
-  if (subHand.some((tile) => tile.setId)) {
+  if (subHand.some((tile) => tile.setId || !tile.concealed)) {
     return;
   }
 
-  const boardTilePlayerDiff = (() => {
-    if (round.tileClaimedBy) {
-      const playerIndex = players.findIndex((p) => p.id === playerId);
-      const otherPlayerIndex = players.findIndex(
-        (p) => p.id === round.tileClaimedBy
-      );
-
-      return playerIndex - otherPlayerIndex;
-    }
-    return null;
-  })();
+  const boardTilePlayerDiff = getBoardTilePlayerDiff({
+    hand: subHand,
+    playerId,
+    players,
+    round,
+  });
 
   const opts = {
     boardTilePlayerDiff,
@@ -139,7 +191,7 @@ export const createMeld = ({
     subHand: subHand.map((tile) => tile.id),
   };
 
-  if (getIsPung(opts) || getIsChow(opts)) {
+  if (getIsPung(opts) || getIsChow(opts) || getIsKong(opts)) {
     const setId = getRandomUUID();
     const concealed = boardTilePlayerDiff === null;
 
@@ -147,21 +199,31 @@ export const createMeld = ({
       tile.setId = setId;
       tile.concealed = concealed;
     });
+
+    return true;
   }
 };
 
-export const removeMeld = ({ subHand }: { subHand: HandTile[] }) => {
-  if (subHand.some((h) => !h.concealed)) {
+export const removeMeld = ({
+  hand,
+  setId,
+}: {
+  hand: HandTile[];
+  setId: string;
+}) => {
+  const meldTiles = hand.filter((h) => h.setId === setId);
+
+  if (meldTiles.some((h) => !h.concealed)) {
     return false;
   }
 
-  subHand.forEach((h) => {
+  meldTiles.forEach((h) => {
     h.setId = null;
   });
 };
 
 export const getHandMelds = ({ hand }: { hand: HandTile[] }) => {
-  const obj: Record<string, true | undefined> = {};
+  const melds: Record<string, undefined | Array<HandTile>> = {};
   let tilesWithoutMeld = 0;
 
   hand.reduce((acc, handTile) => {
@@ -170,9 +232,80 @@ export const getHandMelds = ({ hand }: { hand: HandTile[] }) => {
 
       return acc;
     }
-    acc[handTile.setId] = true;
+    acc[handTile.setId] = acc[handTile.setId] || [];
+    acc[handTile.setId]!.push(handTile);
     return acc;
-  }, obj);
+  }, melds);
 
-  return { melds: Object.keys(hand).length, tilesWithoutMeld };
+  return { melds, tilesWithoutMeld };
+};
+
+export const getPossibleMelds = ({
+  boardTilePlayerDiff,
+  deck,
+  hand,
+  round,
+}: {
+  boardTilePlayerDiff: number | null;
+  deck: Deck;
+  hand: HandTile[];
+  round: Round;
+}) => {
+  const handFiltered = hand.filter((h) => !h.setId);
+  const melds: Tile["id"][][] = [];
+
+  for (
+    let firstTileIndex = 0;
+    firstTileIndex < handFiltered.length;
+    firstTileIndex++
+  ) {
+    for (
+      let secondTileIndex = firstTileIndex + 1;
+      secondTileIndex < handFiltered.length;
+      secondTileIndex++
+    ) {
+      for (
+        let thirdTileIndex = secondTileIndex + 1;
+        thirdTileIndex < handFiltered.length;
+        thirdTileIndex++
+      ) {
+        const firstTile = handFiltered[firstTileIndex];
+        const secondTile = handFiltered[secondTileIndex];
+        const thirdTile = handFiltered[thirdTileIndex];
+
+        const subHand = [firstTile, secondTile, thirdTile].map((t) => t.id);
+
+        const opts = {
+          boardTilePlayerDiff,
+          deck,
+          round,
+          subHand,
+        };
+
+        if (getIsPung(opts) || getIsChow(opts)) {
+          melds.push(subHand);
+        }
+
+        for (
+          let forthTileIndex = thirdTileIndex + 1;
+          forthTileIndex < handFiltered.length;
+          forthTileIndex++
+        ) {
+          const forthTile = handFiltered[forthTileIndex];
+          const fullSubHand = subHand.concat([forthTile.id]);
+
+          const optsKong = {
+            ...opts,
+            subHand: fullSubHand,
+          };
+
+          if (getIsKong(optsKong)) {
+            melds.push(fullSubHand);
+          }
+        }
+      }
+    }
+  }
+
+  return melds;
 };

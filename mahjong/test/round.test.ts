@@ -1,4 +1,5 @@
 import { GamePhase, moveRoundAfterWin, continueRound } from "../src/round";
+import { HandTile } from "../src/tiles";
 import { continueRoundFixture, moveRoundFixture } from "./round.testData";
 
 describe("moveRoundAfterWin", () => {
@@ -19,7 +20,8 @@ describe("continueRound", () => {
   test.each(continueRoundFixture)(
     "Loops through the four players %#",
     (initialRound, finalRound) => {
-      continueRound(initialRound);
+      const hands = [Array.from({ length: 13 })] as HandTile[][];
+      continueRound(initialRound, hands);
 
       expect(initialRound).toEqual(finalRound);
     }

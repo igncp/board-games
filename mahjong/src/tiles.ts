@@ -154,3 +154,11 @@ export type HandTile = {
   id: Tile["id"];
   setId: string | null;
 };
+
+export const sortTileByValue = (tileA: Tile, tileB: Tile) => {
+  if (typeof tileA.value === "number" && typeof tileB.value === "number") {
+    return tileA.value - tileB.value;
+  }
+
+  return tileA.value.toString().localeCompare(tileB.value.toString());
+};

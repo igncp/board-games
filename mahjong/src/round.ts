@@ -1,4 +1,5 @@
 import { Player } from "./player";
+import { HandTile, Tile } from "./tiles";
 
 export enum GamePhase {
   Beginning = "beginning",
@@ -25,9 +26,13 @@ const windsRoundsOrder = [
 export type Round = {
   dealerPlayerIndex: number;
   playerIndex: number;
-  tileClaimedBy: Player["id"] | null;
+  tileClaimed: {
+    by: Player["id"] | null;
+    from: Player["id"];
+    id: Tile["id"];
+  } | null;
   type: RoundType;
-  wallTileDrawn: boolean;
+  wallTileDrawn: null | Tile["id"];
 };
 
 // This assumes that the players array is sorted
@@ -35,24 +40,30 @@ export const createRound = (): Round => {
   return {
     dealerPlayerIndex: 0,
     playerIndex: 0,
-    tileClaimedBy: null,
+    tileClaimed: null,
     type: RoundType.East,
-    wallTileDrawn: false,
+    wallTileDrawn: null,
   };
 };
 
-export const continueRound = (round: Round) => {
-  if (!round.wallTileDrawn) {
+export const continueRound = (round: Round, hands: HandTile[][]) => {
+  if (round.wallTileDrawn === null) {
     return false;
   }
 
-  round.wallTileDrawn = false;
-  round.tileClaimedBy = null;
+  if (hands.some((hand) => hand.length !== 13)) {
+    return false;
+  }
+
+  round.wallTileDrawn = null;
+  round.tileClaimed = null;
 
   round.playerIndex += 1;
   if (round.playerIndex === 4) {
     round.playerIndex = 0;
   }
+
+  return true;
 };
 
 export const moveRoundAfterWin = (subGame: {
@@ -61,8 +72,8 @@ export const moveRoundAfterWin = (subGame: {
 }) => {
   const { round } = subGame;
 
-  round.wallTileDrawn = false;
-  round.tileClaimedBy = null;
+  round.wallTileDrawn = null;
+  round.tileClaimed = null;
 
   round.dealerPlayerIndex += 1;
   if (round.dealerPlayerIndex === 4) {

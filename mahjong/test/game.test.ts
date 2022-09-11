@@ -70,7 +70,7 @@ describe("drawTileFromWall", () => {
       playerB: [2].map(convertToHandTile),
     });
     expect(drawnTile).toEqual(5);
-    expect(round.wallTileDrawn).toEqual(true);
+    expect(round.wallTileDrawn).toEqual(5);
   });
 
   test("Returns null when the wall is empty", () => {
@@ -93,13 +93,14 @@ describe("drawTileFromWall", () => {
       playerB: [2].map(convertToHandTile),
     });
     expect(drawnTile).toEqual(null);
-    expect(round.wallTileDrawn).toEqual(false);
+    expect(round.wallTileDrawn).toEqual(null);
   });
 });
 
 describe("discardTileToBoard", () => {
   test("Moves the selected tile into the board", () => {
     const board = [16, 17, 18];
+    const round = createRound();
     const hands = {
       playerA: Array.from({ length: 14 })
         .map((_, index) => index + 1)
@@ -111,7 +112,8 @@ describe("discardTileToBoard", () => {
       board,
       hands,
       playerId: "playerA",
-      tileIndex: 1,
+      round,
+      tileId: 2,
     });
 
     expect(board).toEqual([16, 17, 18, 2]);
@@ -123,6 +125,7 @@ describe("discardTileToBoard", () => {
       playerB: [15].map(convertToHandTile),
     });
     expect(discardedTile).toEqual(2);
+    expect(round.tileClaimed).toEqual({ by: null, from: "playerA", id: 2 });
   });
 });
 

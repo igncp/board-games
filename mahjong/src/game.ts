@@ -136,7 +136,13 @@ export const discardTileToBoard = ({
   if (!tile) return null;
   if (!tile.concealed) return null;
 
-  if (playerId === round.tileClaimed?.by && tile.id !== round.tileClaimed.id)
+  const { tileClaimed } = round;
+
+  if (
+    playerId === round.tileClaimed?.by &&
+    tile.id !== tileClaimed!.id &&
+    !playerHand.find((t) => t.id === tileClaimed!.id)!.setId
+  )
     return null;
 
   playerHand.splice(tileIndex, 1);

@@ -196,7 +196,7 @@ export const handleDiscardTile = (input: string, game: Game) => {
     tileId,
   });
 
-  if (discardedTileId) {
+  if (typeof discardedTileId === "number") {
     console.log(
       "The discarded tile was:",
       formatToEmoji(game.deck[discardedTileId])

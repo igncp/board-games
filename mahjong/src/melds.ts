@@ -104,8 +104,9 @@ export const getIsKong = ({ subHand, deck }: SetCheckOpts) => {
 
     if (
       getIsSuitTile(tile) &&
-      getIsSuitTile(lastTile) &&
-      (lastTile.suit !== tile.suit || lastTile.value !== tile.value)
+      (!getIsSuitTile(lastTile) ||
+        lastTile.suit !== tile.suit ||
+        lastTile.value !== tile.value)
     ) {
       return false;
     }

@@ -1,7 +1,13 @@
-import { getIsChow, getIsPung, getPossibleMelds } from "../src/melds";
+import {
+  getIsChow,
+  getIsKong,
+  getIsPung,
+  getPossibleMelds,
+} from "../src/melds";
 import { Deck } from "../src/tiles";
 import {
   chowTilesFixture,
+  kongTilesFixture,
   possibleMeldsFixture,
   pungTilesFixture,
 } from "./melds.testData";
@@ -36,6 +42,24 @@ describe("getIsChow", () => {
       const subHand = tilesWithId.map((t) => t.id);
 
       expect(getIsChow({ subHand, deck, boardTilePlayerDiff })).toEqual(isChow);
+    }
+  );
+});
+
+describe("getIsKong", () => {
+  test.each(kongTilesFixture)(
+    "Returns the expected result on combinations: %#",
+    (tiles, isKong) => {
+      const tilesWithId = tiles.map((t, id) => ({ ...t, id }));
+      const deck = tilesWithId.reduce((deck, tile) => {
+        deck[tile.id] = tile;
+        return deck;
+      }, {} as Deck);
+      const subHand = tilesWithId.map((t) => t.id);
+
+      expect(getIsKong({ subHand, deck, boardTilePlayerDiff: null })).toEqual(
+        isKong
+      );
     }
   );
 });

@@ -91,6 +91,32 @@ export const pungTilesFixture = [
   ],
 ] as [[Tile, Tile, Tile], boolean][];
 
+export const kongTilesFixture = [
+  [
+    [
+      {
+        type: TileType.Wind,
+        value: Wind.West,
+      },
+      {
+        type: TileType.Wind,
+        value: Wind.West,
+      },
+      {
+        suit: Suit.Dots,
+        type: TileType.Suit,
+        value: 7,
+      },
+      {
+        suit: Suit.Dots,
+        type: TileType.Suit,
+        value: 7,
+      },
+    ],
+    false,
+  ],
+] as [[Tile, Tile, Tile, Tile], boolean][];
+
 export const chowTilesFixture = [
   [
     Array.from({ length: 3 }).map((_, index) => ({

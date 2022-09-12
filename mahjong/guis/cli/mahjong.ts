@@ -4,7 +4,7 @@ import { startCLIGame } from "./gameLoop";
 const main = () => {
   program
     .command("start")
-    .option("-e, --exported", "Use exported data")
+    .option("-e, --exported [file]", "Use exported data")
     .action((options) => {
       startCLIGame(options.exported);
     });

@@ -13,6 +13,8 @@ import {
   handleMovePlayer,
   handleNextCombined,
   handlePossibleMelds,
+  handlePossibleMeldsByDiscard,
+  handleSayMahjong,
   handleShowGameSummary,
   handleSortHand,
   handleStartGame,
@@ -20,12 +22,21 @@ import {
 import { GamePhase } from "../../src/round";
 import { getHelpStr } from "./help";
 
-export const startCLIGame = async (useExported: boolean) => {
-  const prompt = new Prompt();
+export const startCLIGame = async (useExported: string) => {
   const game = createGame();
 
+  const prompt = new Prompt(() => {
+    handleExportGame("e /tmp/auto-save.json", game);
+    process.exit(0);
+  });
+
   if (useExported) {
-    handleImportGame(game);
+    handleImportGame(
+      ["e"]
+        .concat(typeof useExported === "string" ? [useExported] : [])
+        .join(" "),
+      game
+    );
   }
 
   while (true) {
@@ -40,11 +51,11 @@ export const startCLIGame = async (useExported: boolean) => {
 
     switch (nextStep) {
       case "e": {
-        handleExportGame(game);
+        handleExportGame(input, game);
         break;
       }
       case "i": {
-        handleImportGame(game);
+        handleImportGame(input, game);
         break;
       }
       case "h": {
@@ -105,6 +116,9 @@ export const startCLIGame = async (useExported: boolean) => {
                 handleListHand(input, game, true);
                 break;
               }
+              case "mah": {
+                handleSayMahjong(game);
+              }
               case "n": {
                 handleMovePlayer(game);
                 break;
@@ -119,6 +133,10 @@ export const startCLIGame = async (useExported: boolean) => {
               }
               case "pm": {
                 handlePossibleMelds(game);
+                break;
+              }
+              case "pmd": {
+                handlePossibleMeldsByDiscard(game);
                 break;
               }
               case "ss": {

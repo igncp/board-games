@@ -307,16 +307,18 @@ export const handleSortHand = (
 
 const EXPORT_FILE_PATH = path.resolve("/tmp/mahjong-exports.json");
 
-export const handleExportGame = (game: Game) => {
-  fs.writeFileSync(EXPORT_FILE_PATH, JSON.stringify(game, null, 2));
-  console.log("Exported");
+export const handleExportGame = (input: string, game: Game) => {
+  const [, filePath = EXPORT_FILE_PATH] = input.split(" ");
+  fs.writeFileSync(filePath, JSON.stringify(game, null, 2));
+  console.log("Exported " + filePath);
 };
 
-export const handleImportGame = (game: Game) => {
-  const file = fs.readFileSync(EXPORT_FILE_PATH, "utf-8");
+export const handleImportGame = (input: string, game: Game) => {
+  const [, filePath = EXPORT_FILE_PATH] = input.split(" ");
+  const file = fs.readFileSync(filePath, "utf-8");
   const fileContent = JSON.parse(file);
   Object.assign(game, fileContent);
-  console.log("Imported");
+  console.log("Imported " + filePath);
 };
 
 export const handleCreateMeld = (input: string, game: Game) => {
@@ -344,6 +346,7 @@ export const handleCreateMeld = (input: string, game: Game) => {
 };
 
 export const handlePossibleMelds = (game: Game) => {
+  let hadOneMeld = false;
   game.players.forEach((player) => {
     const {
       deck,
@@ -385,6 +388,7 @@ export const handlePossibleMelds = (game: Game) => {
     });
 
     if (possibleMelds.length) {
+      hadOneMeld = true;
       console.log("Player: " + player.name);
       possibleMelds.forEach((meld) => {
         console.log(
@@ -395,4 +399,55 @@ export const handlePossibleMelds = (game: Game) => {
       console.log("");
     }
   });
+
+  if (!hadOneMeld) {
+    console.log("No possible melds");
+  }
+};
+
+export const handlePossibleMeldsByDiscard = (game: Game) => {
+  console.log("Melds without discarding");
+  handlePossibleMelds(game);
+
+  const playerIndex = game.players.findIndex(
+    (player) => game.table.hands[player.id].length === 14
+  );
+
+  if (playerIndex === -1 || game.round.playerIndex !== playerIndex) {
+    console.log("No player can discard a tile");
+    return;
+  }
+
+  const playerHand = game.table.hands[game.players[playerIndex].id].filter(
+    (h) => !h.setId
+  );
+
+  playerHand.forEach((handTile) => {
+    const gameCopy = JSON.parse(JSON.stringify(game));
+    const tile = gameCopy.deck[handTile.id];
+    console.log("");
+    console.log("Melds when discarding: " + formatToEmoji(tile) + "-----");
+
+    discardTileToBoard({
+      board: gameCopy.table.board,
+      hands: gameCopy.table.hands,
+      playerId: gameCopy.players[playerIndex].id,
+      tileId: handTile.id,
+      round: gameCopy.round,
+    });
+
+    handlePossibleMelds(gameCopy);
+  });
+};
+
+export const handleSayMahjong = (game: Game) => {
+  const playerWith14Tiles = game.players.find((player) => {
+    const hand = game.table.hands[player.id];
+    return hand.length === 14;
+  });
+
+  if (!playerWith14Tiles) {
+    console.log("No player has 14 tiles");
+    return;
+  }
 };

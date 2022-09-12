@@ -2,8 +2,10 @@
 // http://mahjong.wikidot.com/
 // https://en.wikipedia.org/wiki/Mahjong_tiles
 
+import { getIsPair } from "./melds";
 import { Player } from "./player";
-import { createRound, GamePhase, Round } from "./round";
+import { createRound, GamePhase, moveRoundAfterWin, Round } from "./round";
+import { calculateHandScore, Score } from "./score";
 import type { Deck, HandTile, Tile } from "./tiles";
 import { getDefaultDeck } from "./tiles";
 import { getShuffledArray } from "./util";
@@ -13,9 +15,6 @@ type Table = {
   drawWall: Tile["id"][];
   hands: Record<Player["id"], HandTile[]>;
 };
-
-// http://mahjongtime.com/Chinese-Official-Mahjong-Scoring.html
-type Score = Record<Player["id"], number>;
 
 export const getCurrentPlayer = ({
   round,
@@ -38,7 +37,7 @@ export type Game = {
 
 const defaultCreatePlayer = (_: unknown, index: number): Player => {
   const id = Math.random().toString();
-  return { id, name: "Player " + (index + 1) };
+  return { id, name: "Player " + index };
 };
 
 export const convertToHandTile = (id: Tile["id"]) => {
@@ -185,4 +184,23 @@ export const claimTile = ({
 
 export const startGame = (game: Game) => {
   game.phase = GamePhase.Playing;
+};
+
+export const sayMahjong = (playerId: Player["id"], game: Game) => {
+  const playerHand = game.table.hands[playerId];
+
+  if (playerHand.length !== 14) return null;
+
+  const { deck } = game;
+  const tilesWithoutMeld = playerHand
+    .filter((t) => !t.setId)
+    .map((t) => deck[t.id]);
+
+  if (getIsPair({ hand: tilesWithoutMeld })) return null;
+
+  calculateHandScore({ score: game.score, winnerPlayer: playerId });
+
+  moveRoundAfterWin(game);
+
+  return true;
 };

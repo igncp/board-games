@@ -134,6 +134,6 @@ describe("getCurrentPlayer", () => {
     const game = createGame();
     game.round.playerIndex = 2;
     const player = getCurrentPlayer(game);
-    expect(player.name).toEqual("Player 3");
+    expect(player.name).toEqual("Player 2");
   });
 });

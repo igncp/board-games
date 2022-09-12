@@ -65,7 +65,7 @@ export const getIsChow = ({
 }: SetCheckOpts) => {
   if (subHand?.length !== 3) return false;
 
-  if (typeof boardTilePlayerDiff === "number" && boardTilePlayerDiff !== -1)
+  if (typeof boardTilePlayerDiff === "number" && boardTilePlayerDiff !== 1)
     return false;
 
   const subHandSorted = subHand.map((h) => deck[h]).sort(sortTileByValue);
@@ -309,4 +309,15 @@ export const getPossibleMelds = ({
   }
 
   return melds;
+};
+
+export const getIsPair = ({ hand }: { hand: Tile[] }) => {
+  if (hand.length !== 2) return false;
+
+  if (hand[0].type !== hand[1].type) return false;
+  if (hand[0].value !== hand[1].value) return false;
+  if ("suit" in hand[0] && "suit" in hand[1] && hand[0].suit !== hand[1].suit)
+    return false;
+
+  return true;
 };

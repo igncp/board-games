@@ -1,6 +1,7 @@
 import {
   getIsChow,
   getIsKong,
+  getIsPair,
   getIsPung,
   getPossibleMelds,
 } from "../src/melds";
@@ -8,6 +9,7 @@ import { Deck } from "../src/tiles";
 import {
   chowTilesFixture,
   kongTilesFixture,
+  pairsFixture,
   possibleMeldsFixture,
   pungTilesFixture,
 } from "./melds.testData";
@@ -71,6 +73,15 @@ describe("getPossibleMelds", () => {
       expect(
         getPossibleMelds({ hand, round, boardTilePlayerDiff, deck })
       ).toEqual(expectedResult);
+    }
+  );
+});
+
+describe("getIsPair", () => {
+  test.each(pairsFixture)(
+    "Returns the expected result on combinations: %#",
+    (hand, expectedResult) => {
+      expect(getIsPair({ hand })).toEqual(expectedResult);
     }
   );
 });

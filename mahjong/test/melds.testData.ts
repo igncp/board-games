@@ -134,7 +134,7 @@ export const chowTilesFixture = [
       value: index + 1,
     })),
     true,
-    -1,
+    1,
   ],
   [
     Array.from({ length: 3 }).map((_, index) => ({
@@ -143,7 +143,7 @@ export const chowTilesFixture = [
       value: index + 1,
     })),
     false,
-    1,
+    -1,
   ],
   [
     Array.from({ length: 3 }).map(() => ({
@@ -185,3 +185,39 @@ export const possibleMeldsFixture = [
     ],
   ],
 ] as [HandTile[], Round, Deck, number, number[][]][];
+
+export const pairsFixture = [
+  [
+    Array.from({ length: 2 }).map((_, id) => ({
+      id,
+      suit: Suit.Dots,
+      type: TileType.Suit,
+      value: 3,
+    })),
+    true,
+  ],
+  [
+    Array.from({ length: 2 }).map((_, id) => ({
+      id,
+      type: TileType.Flower,
+      value: Flower.Chrysanthemum,
+    })),
+    true,
+  ],
+  [
+    Array.from({ length: 2 }).map((_, id) => ({
+      id,
+      type: TileType.Flower,
+      value: id === 0 ? Flower.Chrysanthemum : Flower.Bamboo,
+    })),
+    false,
+  ],
+  [
+    Array.from({ length: 1 }).map((_, id) => ({
+      id,
+      suit: Suit.Dots,
+      type: TileType.Suit,
+    })),
+    false,
+  ],
+] as [Tile[], boolean][];

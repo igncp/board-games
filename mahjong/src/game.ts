@@ -48,6 +48,21 @@ export const convertToHandTile = (id: Tile["id"]) => {
   };
 };
 
+export const createTable = (deck: Deck, players: Player[]): Game["table"] => {
+  const shuffledDeck = getShuffledArray(Object.keys(deck).map(Number));
+  const hands = players.reduce((handsAcc, player) => {
+    handsAcc[player.id] = shuffledDeck.splice(0, 13).map(convertToHandTile);
+
+    return handsAcc;
+  }, {} as Game["table"]["hands"]);
+
+  return {
+    drawWall: shuffledDeck,
+    board: [],
+    hands,
+  };
+};
+
 export const createGame = (
   opts: Partial<{ deck: Deck; players: Player[] }> = {}
 ): Game => {
@@ -55,25 +70,13 @@ export const createGame = (
     opts.players || Array.from({ length: 4 }).map(defaultCreatePlayer);
 
   const deck = opts.deck || getDefaultDeck();
-  const shuffledDeck = getShuffledArray(Object.keys(deck).map(Number));
-
-  const hands = players.reduce((handsAcc, player) => {
-    handsAcc[player.id] = shuffledDeck.splice(0, 13).map(convertToHandTile);
-
-    return handsAcc;
-  }, {} as Game["table"]["hands"]);
+  const table = createTable(deck, players);
 
   const score = players.reduce((scoreAcc, player) => {
     scoreAcc[player.id] = 0;
 
     return scoreAcc;
   }, {} as Game["score"]);
-
-  const table = {
-    drawWall: shuffledDeck,
-    board: [],
-    hands,
-  };
 
   const phase = GamePhase.Beginning;
 
@@ -196,11 +199,13 @@ export const sayMahjong = (playerId: Player["id"], game: Game) => {
     .filter((t) => !t.setId)
     .map((t) => deck[t.id]);
 
-  if (getIsPair({ hand: tilesWithoutMeld })) return null;
+  if (!getIsPair({ hand: tilesWithoutMeld })) return null;
 
   calculateHandScore({ score: game.score, winnerPlayer: playerId });
 
   moveRoundAfterWin(game);
+
+  game.table = createTable(game.deck, game.players);
 
   return true;
 };

@@ -118,6 +118,7 @@ export const startCLIGame = async (useExported: string) => {
               }
               case "mah": {
                 handleSayMahjong(game);
+                break;
               }
               case "n": {
                 handleMovePlayer(game);

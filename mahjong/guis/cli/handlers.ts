@@ -8,6 +8,7 @@ import {
   drawTileFromWall,
   getCurrentPlayer,
   startGame,
+  sayMahjong,
 } from "../../src/game";
 import { continueRound, GamePhase, Round } from "../../src/round";
 import {
@@ -62,6 +63,10 @@ const getGameShortSummary = (game: Game) => {
           " " +
           formatToEmoji(game.deck[game.round.tileClaimed!.id])
         : "No"),
+    "Score:",
+    ...game.players.map((player) => {
+      return "- " + player.name + ": " + game.score[player.id];
+    }),
   ].join("\n");
 };
 
@@ -450,4 +455,8 @@ export const handleSayMahjong = (game: Game) => {
     console.log("No player has 14 tiles");
     return;
   }
+
+  const success = sayMahjong(playerWith14Tiles.id, game);
+
+  console.log(success ? "New hand started" : "Mahjong was not valid");
 };

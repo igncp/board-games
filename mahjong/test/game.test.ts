@@ -3,8 +3,8 @@ import {
   createGame,
   discardTileToBoard,
   drawTileFromWall,
-  getCurrentPlayer,
 } from "../src/game";
+import { getCurrentPlayer } from "../src/player";
 import { createRound } from "../src/round";
 
 describe("createGame", () => {

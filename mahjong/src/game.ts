@@ -16,16 +16,6 @@ type Table = {
   hands: Record<Player["id"], HandTile[]>;
 };
 
-export const getCurrentPlayer = ({
-  round,
-  players,
-}: {
-  round: Round;
-  players: Player[];
-}) => {
-  return players[round.playerIndex] as Player;
-};
-
 export type Game = {
   deck: Deck;
   phase: GamePhase;
@@ -201,7 +191,17 @@ export const sayMahjong = (playerId: Player["id"], game: Game) => {
 
   if (!getIsPair({ hand: tilesWithoutMeld })) return null;
 
-  calculateHandScore({ score: game.score, winnerPlayer: playerId });
+  const hand = game.table.hands[playerId];
+
+  const { round, score } = game;
+
+  calculateHandScore({
+    deck,
+    hand,
+    round,
+    score,
+    winnerPlayer: playerId,
+  });
 
   moveRoundAfterWin(game);
 

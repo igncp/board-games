@@ -1,5 +1,5 @@
 import { Player } from "./player";
-import { HandTile, Tile } from "./tiles";
+import { HandTile, Tile, Wind } from "./tiles";
 
 export enum GamePhase {
   Beginning = "beginning",
@@ -7,21 +7,9 @@ export enum GamePhase {
   Playing = "playing",
 }
 
-export enum RoundType {
-  East = "east",
-  North = "north",
-  South = "south",
-  West = "west",
-}
-
 // Note that this order is reversed to the compass directions, since it is
 // counter-clockwise
-const windsRoundsOrder = [
-  RoundType.East,
-  RoundType.South,
-  RoundType.West,
-  RoundType.North,
-];
+export const windsRoundsOrder = [Wind.East, Wind.South, Wind.West, Wind.North];
 
 export type Round = {
   dealerPlayerIndex: number;
@@ -31,7 +19,7 @@ export type Round = {
     from: Player["id"];
     id: Tile["id"];
   } | null;
-  type: RoundType;
+  type: Wind;
   wallTileDrawn: null | Tile["id"];
 };
 
@@ -41,7 +29,7 @@ export const createRound = (): Round => {
     dealerPlayerIndex: 0,
     playerIndex: 0,
     tileClaimed: null,
-    type: RoundType.East,
+    type: Wind.East,
     wallTileDrawn: null,
   };
 };

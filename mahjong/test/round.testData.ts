@@ -1,4 +1,5 @@
-import { RoundType, Round, GamePhase } from "../src/round";
+import { Round, GamePhase } from "../src/round";
+import { Wind } from "../src/tiles";
 
 export const moveRoundFixture = [
   [
@@ -6,14 +7,14 @@ export const moveRoundFixture = [
       dealerPlayerIndex: 2,
       playerIndex: 2,
       tileClaimed: null,
-      type: RoundType.West,
+      type: Wind.West,
       wallTileDrawn: 2,
     },
     {
       dealerPlayerIndex: 3,
       playerIndex: 3,
       tileClaimed: null,
-      type: RoundType.West,
+      type: Wind.West,
       wallTileDrawn: null,
     },
     GamePhase.Playing,
@@ -22,7 +23,7 @@ export const moveRoundFixture = [
     {
       dealerPlayerIndex: 0,
       playerIndex: 3,
-      type: RoundType.South,
+      type: Wind.South,
       tileClaimed: null,
       wallTileDrawn: 2,
     },
@@ -30,7 +31,7 @@ export const moveRoundFixture = [
       dealerPlayerIndex: 2,
       tileClaimed: null,
       playerIndex: 2,
-      type: RoundType.West,
+      type: Wind.West,
       wallTileDrawn: null,
     },
     GamePhase.Playing,
@@ -40,14 +41,14 @@ export const moveRoundFixture = [
       dealerPlayerIndex: 2,
       playerIndex: 1,
       tileClaimed: null,
-      type: RoundType.North,
+      type: Wind.North,
       wallTileDrawn: 1,
     },
     {
       dealerPlayerIndex: 3,
       playerIndex: 3,
       tileClaimed: null,
-      type: RoundType.North,
+      type: Wind.North,
       wallTileDrawn: null,
     },
     GamePhase.End,
@@ -60,14 +61,14 @@ export const continueRoundFixture = [
       dealerPlayerIndex: 2,
       playerIndex: 2,
       tileClaimed: null,
-      type: RoundType.West,
+      type: Wind.West,
       wallTileDrawn: 3,
     },
     {
       dealerPlayerIndex: 2,
       playerIndex: 3,
       tileClaimed: null,
-      type: RoundType.West,
+      type: Wind.West,
       wallTileDrawn: null,
     },
   ],
@@ -76,14 +77,14 @@ export const continueRoundFixture = [
       dealerPlayerIndex: 3,
       playerIndex: 3,
       tileClaimed: null,
-      type: RoundType.West,
+      type: Wind.West,
       wallTileDrawn: 3,
     },
     {
       dealerPlayerIndex: 3,
       playerIndex: 0,
       tileClaimed: null,
-      type: RoundType.West,
+      type: Wind.West,
       wallTileDrawn: null,
     },
   ],

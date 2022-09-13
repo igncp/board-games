@@ -6,7 +6,6 @@ import {
   claimTile,
   discardTileToBoard,
   drawTileFromWall,
-  getCurrentPlayer,
   startGame,
   sayMahjong,
 } from "../../src/game";
@@ -24,6 +23,7 @@ import {
   getHandMelds,
   getPossibleMelds,
 } from "../../src/melds";
+import { getCurrentPlayer } from "../../src/player";
 
 export const handleGetPlayer = (game: Game) => {
   const player = getCurrentPlayer(game);

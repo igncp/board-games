@@ -2,28 +2,12 @@
 // http://mahjong.wikidot.com/
 // https://en.wikipedia.org/wiki/Mahjong_tiles
 
+import { Deck, Game, GamePhase, Player, Round, Table, Tile } from "./core";
 import { getIsPair } from "./melds";
-import { Player } from "./player";
-import { createRound, GamePhase, moveRoundAfterWin, Round } from "./round";
-import { calculateHandScore, Score } from "./score";
-import type { Deck, HandTile, Tile } from "./tiles";
+import { createRound, moveRoundAfterWin } from "./round";
+import { calculateHandScore } from "./score";
 import { getDefaultDeck } from "./tiles";
 import { getShuffledArray } from "./util";
-
-type Table = {
-  board: Tile["id"][];
-  drawWall: Tile["id"][];
-  hands: Record<Player["id"], HandTile[]>;
-};
-
-export type Game = {
-  deck: Deck;
-  phase: GamePhase;
-  players: Player[];
-  round: Round;
-  score: Score;
-  table: Table;
-};
 
 const defaultCreatePlayer = (_: unknown, index: number): Player => {
   const id = Math.random().toString();
@@ -74,6 +58,7 @@ export const createGame = (
 
   return {
     deck,
+    id: Math.random().toString(),
     phase,
     players,
     round,

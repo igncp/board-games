@@ -1,5 +1,5 @@
-import { GamePhase, moveRoundAfterWin, continueRound } from "../src/round";
-import { HandTile } from "../src/tiles";
+import { GamePhase, HandTile } from "../src/core";
+import { moveRoundAfterWin, continueRound } from "../src/round";
 import { continueRoundFixture, moveRoundFixture } from "./round.testData";
 
 describe("moveRoundAfterWin", () => {

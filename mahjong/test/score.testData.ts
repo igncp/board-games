@@ -1,6 +1,6 @@
 import { createRound } from "../src/round";
 import { calculateHandScore } from "../src/score";
-import { Deck, Dragon, Flower, Suit, Tile, TileType } from "../src/tiles";
+import { Deck, Dragon, Flower, Suit, Tile, TileType } from "../src/core";
 
 export type Opts = Parameters<typeof calculateHandScore>[0];
 

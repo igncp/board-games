@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  db:
+    image: mariadb:10.9.2
+    command: [
+      '--wait_timeout=28800',
+      '--max_allowed_packet=1073741824',
+    ]
+    restart: unless-stopped
+    environment:
+      - MARIADB_ROOT_PASSWORD=mahjong
+      - MARIADB_DATABASE=mahjong
+      - MARIADB_USER=mahjong
+      - MARIADB_PASSWORD=mahjong
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./docker_volumes/db:/var/lib/mysql

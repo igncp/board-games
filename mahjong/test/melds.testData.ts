@@ -1,5 +1,5 @@
-import { createRound, Round } from "../src/round";
 import {
+  Round,
   Suit,
   TileType,
   Tile,
@@ -7,7 +7,8 @@ import {
   Flower,
   HandTile,
   Deck,
-} from "../src/tiles";
+} from "../src/core";
+import { createRound } from "../src/round";
 
 export const pungTilesFixture = [
   [

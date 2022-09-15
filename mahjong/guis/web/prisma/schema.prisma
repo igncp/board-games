@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:mahjong@localhost:3306/mahjong"
+}
+
+model Game {
+  id      String   @id
+  players Player[]
+  round   Round    @relation(fields: [roundId], references: [id])
+  roundId Int      @unique
+  score   Score[]
+  hands   Hand[]
+}
+
+model Hand {
+  id        Int     @id @default(autoincrement())
+  order     Int
+  concealed Boolean
+  setId     String?
+  tileId    Int
+  game      Game    @relation(fields: [gameId], references: [id])
+  gameId    String
+  player    Player  @relation(fields: [playerId], references: [id])
+  playerId  String
+}
+
+model Score {
+  id       String @id
+  game     Game   @relation(fields: [gameId], references: [id])
+  gameId   String
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId String
+  score    Int
+}
+
+model Player {
+  id    String  @id
+  name  String
+  games Game[]
+  score Score[]
+  hands Hand[]
+}
+
+enum GamePhase {
+  Beginning
+  End
+  Playing
+}
+
+enum Wind {
+  East
+  North
+  South
+  West
+}
+
+model Round {
+  id                Int     @id @default(autoincrement())
+  playerIndex       Int
+  dealerPlayerIndex Int
+  type              Wind
+  wallTileDrawn     Int?
+  tileClaimedId     Int?
+  tileClaimedFrom   String?
+  tileClaimedBy     String?
+  game              Game?
+}

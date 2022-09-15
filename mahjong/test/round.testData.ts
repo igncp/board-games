@@ -1,5 +1,4 @@
-import { Round, GamePhase } from "../src/round";
-import { Wind } from "../src/tiles";
+import { GamePhase, Round, Wind } from "../src/core";
 
 export const moveRoundFixture = [
   [

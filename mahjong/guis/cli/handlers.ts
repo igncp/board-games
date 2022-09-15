@@ -2,21 +2,14 @@ import path from "node:path";
 import fs from "node:fs";
 
 import {
-  Game,
   claimTile,
   discardTileToBoard,
   drawTileFromWall,
   startGame,
   sayMahjong,
 } from "../../src/game";
-import { continueRound, GamePhase, Round } from "../../src/round";
-import {
-  getIsSuitTile,
-  HandTile,
-  sortTileByValue,
-  TileType,
-} from "../../src/tiles";
-import { formatToEmoji } from "./formatters";
+import { continueRound } from "../../src/round";
+import { getIsSuitTile, sortTileByValue } from "../../src/tiles";
 import {
   createMeld,
   getBoardTilePlayerDiff,
@@ -24,6 +17,9 @@ import {
   getPossibleMelds,
 } from "../../src/melds";
 import { getCurrentPlayer } from "../../src/player";
+import { Game, GamePhase, HandTile, Round, TileType } from "../../src/core";
+
+import { formatToEmoji } from "./formatters";
 
 export const handleGetPlayer = (game: Game) => {
   const player = getCurrentPlayer(game);

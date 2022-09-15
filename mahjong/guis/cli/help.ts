@@ -1,5 +1,4 @@
-import { Game } from "../../src/game";
-import { GamePhase } from "../../src/round";
+import { Game, GamePhase } from "../../src/core";
 
 export const getHelpStr = (game: Game) =>
   [

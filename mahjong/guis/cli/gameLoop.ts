@@ -19,8 +19,8 @@ import {
   handleSortHand,
   handleStartGame,
 } from "./handlers";
-import { GamePhase } from "../../src/round";
 import { getHelpStr } from "./help";
+import { GamePhase } from "../../src/core";
 
 export const startCLIGame = async (useExported: string) => {
   const game = createGame();

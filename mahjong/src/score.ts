@@ -1,11 +1,6 @@
+import { Player, Round, Score, Deck, HandTile, TileType } from "./core";
 import { getHandMelds, getIsChow, getIsKong, getIsPung } from "./melds";
-import { Player } from "./player";
-import { Round, windsRoundsOrder } from "./round";
-import { Deck, HandTile, TileType } from "./tiles";
-
-// http://mahjongtime.com/Chinese-Official-Mahjong-Scoring.html
-// http://mahjongtime.com/scoring-chart.html
-export type Score = Record<Player["id"], number>;
+import { windsRoundsOrder } from "./round";
 
 export const calculateHandScore = ({
   deck,

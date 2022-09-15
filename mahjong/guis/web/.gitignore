@@ -1,5 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+tsconfig.tsbuildinfo
+docker_volumes
+
+# Ignore for now
+prisma/migrations
+
 # dependencies
 /node_modules
 /.pnp

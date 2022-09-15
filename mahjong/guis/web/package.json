@@ -1,18 +1,28 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "dev": "next dev",
+    "prisma:format": "prisma format",
+    "prisma:seed": "ts-node ./prisma/seed.ts",
+    "start": "next start",
+    "test": "tsc --noEmit --project ."
   },
   "dependencies": {
+    "@prisma/client": "^4.3.1",
     "@types/react": "^18.0.20",
     "@types/react-dom": "^18.0.6",
+    "mahjong": "file:../..",
     "next": "12.3.0",
+    "prisma": "^4.3.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "socket.io": "^4.5.2",
     "socket.io-client": "^4.5.2",
+    "ts-node": "^10.9.1",
     "uuid": "^9.0.0"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

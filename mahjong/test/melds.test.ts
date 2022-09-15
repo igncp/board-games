@@ -1,3 +1,4 @@
+import { Deck } from "../src/core";
 import {
   getIsChow,
   getIsKong,
@@ -5,7 +6,6 @@ import {
   getIsPung,
   getPossibleMelds,
 } from "../src/melds";
-import { Deck } from "../src/tiles";
 import {
   chowTilesFixture,
   kongTilesFixture,

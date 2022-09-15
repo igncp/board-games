@@ -1,27 +1,8 @@
-import { Player } from "./player";
-import { HandTile, Tile, Wind } from "./tiles";
-
-export enum GamePhase {
-  Beginning = "beginning",
-  End = "end",
-  Playing = "playing",
-}
+import { GamePhase, HandTile, Round, Wind } from "./core";
 
 // Note that this order is reversed to the compass directions, since it is
 // counter-clockwise
 export const windsRoundsOrder = [Wind.East, Wind.South, Wind.West, Wind.North];
-
-export type Round = {
-  dealerPlayerIndex: number;
-  playerIndex: number;
-  tileClaimed: {
-    by: Player["id"] | null;
-    from: Player["id"];
-    id: Tile["id"];
-  } | null;
-  type: Wind;
-  wallTileDrawn: null | Tile["id"];
-};
 
 // This assumes that the players array is sorted
 export const createRound = (): Round => {

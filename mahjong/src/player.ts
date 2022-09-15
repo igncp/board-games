@@ -1,9 +1,4 @@
-import { Round } from "./round";
-
-export type Player = {
-  id: string;
-  name: string;
-};
+import { Player, Round } from "./core";
 
 export const getCurrentPlayer = ({
   round,

@@ -5,9 +5,11 @@
   "description": "",
   "scripts": {
     "cli": "ts-node ./guis/cli/mahjong.ts",
-    "test": "npm run test:ts && npm run test:jest",
-    "test:jest": "jest test --verbose",
-    "test:ts": "tsc --noEmit --project ."
+    "build": "tsc --project .",
+    "test": "npm run test:ts && npm run test:jest && npm run test:web",
+    "test:jest": "jest --verbose ./test",
+    "test:ts": "tsc --noEmit --project .",
+    "test:web": "cd guis/web && npm run test"
   },
   "keywords": [],
   "author": "",

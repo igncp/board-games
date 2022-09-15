@@ -1,4 +1,5 @@
-import { getIsSuitTile, Suit, Tile, TileType } from "../../src/tiles";
+import { Suit, Tile, TileType } from "../../src/core";
+import { getIsSuitTile } from "../../src/tiles";
 
 export const formatToEmoji = (tile: Tile) => {
   if (getIsSuitTile(tile)) {

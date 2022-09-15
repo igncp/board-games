@@ -1,17 +1,12 @@
 // https://en.wikipedia.org/wiki/Mahjong#Concealed_vs._revealed_meld_and_hand
 
 import {
-  Deck,
-  HandTile,
-  SuitTile,
-  Tile,
   getIsBonusTile,
   getIsHonorTile,
   getIsSuitTile,
   sortTileByValue,
 } from "./tiles";
-import { Round } from "./round";
-import { Player } from "./player";
+import { Deck, HandTile, SuitTile, Tile, Player, Round } from "./core";
 
 type SetCheckOpts = {
   deck: Deck;

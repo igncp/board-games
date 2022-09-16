@@ -1,21 +1,20 @@
-import { Server } from "socket.io";
+import { NextApiRequest, NextApiResponse } from "next/types";
+import { gameSocketConnector } from "../../lib/api/gameSocketConnector";
+import { setUp } from "../../lib/api/socket";
 
-export default function SocketHandler(_req, res) {
+export default (_req: NextApiRequest, res: NextApiResponse) => {
+  // @ts-expect-error
   if (res.socket.server.io) {
     res.end();
     return;
   }
 
-  const io = new Server(res.socket.server);
-  res.socket.server.io = io;
-
-  const onConnection = (socket) => {
-    socket.on("createdMessage", (msg) => {
-      socket.broadcast.emit("newIncomingMessage", msg);
-    });
-  };
-
-  io.on("connection", onConnection);
+  setUp({
+    res,
+    onConnection: (socket) => {
+      gameSocketConnector.onConnection(socket);
+    },
+  });
 
   res.end();
-}
+};

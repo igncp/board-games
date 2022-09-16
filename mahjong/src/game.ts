@@ -38,7 +38,7 @@ export const createTable = (deck: Deck, players: Player[]): Game["table"] => {
 };
 
 export const createGame = (
-  opts: Partial<{ deck: Deck; players: Player[] }> = {}
+  opts: Partial<{ deck: Deck; players: Player[]; gameId: Game["id"] }> = {}
 ): Game => {
   const players =
     opts.players || Array.from({ length: 4 }).map(defaultCreatePlayer);
@@ -58,7 +58,7 @@ export const createGame = (
 
   return {
     deck,
-    id: Math.random().toString(),
+    id: opts.gameId || Math.random().toString(),
     phase,
     players,
     round,

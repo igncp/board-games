@@ -7,13 +7,33 @@ datasource db {
   url      = "mysql://root:mahjong@localhost:3306/mahjong"
 }
 
+enum GamePhase {
+  Beginning
+  End
+  Playing
+}
+
 model Game {
-  id      String   @id
-  players Player[]
-  round   Round    @relation(fields: [roundId], references: [id])
-  roundId Int      @unique
+  id      String         @id
+  deckId  String
+  phase   GamePhase
+  round   Round          @relation(fields: [roundId], references: [id])
+  roundId Int            @unique
+  players PlayerOnGame[]
   score   Score[]
   hands   Hand[]
+  board   BoardTile[]
+  wall    WallTile[]
+}
+
+model PlayerOnGame {
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId String
+  game     Game   @relation(fields: [gameId], references: [id])
+  gameId   String
+  order    Int
+
+  @@id([playerId, gameId])
 }
 
 model Hand {
@@ -28,8 +48,26 @@ model Hand {
   playerId  String
 }
 
+model BoardTile {
+  order  Int
+  tileId Int
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  @@id([tileId, gameId])
+}
+
+model WallTile {
+  order  Int
+  tileId Int
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  @@id([tileId, gameId])
+}
+
 model Score {
-  id       String @id
+  id       Int    @id @default(autoincrement())
   game     Game   @relation(fields: [gameId], references: [id])
   gameId   String
   player   Player @relation(fields: [playerId], references: [id])
@@ -38,17 +76,11 @@ model Score {
 }
 
 model Player {
-  id    String  @id
+  id    String         @id
   name  String
-  games Game[]
+  games PlayerOnGame[]
   score Score[]
   hands Hand[]
-}
-
-enum GamePhase {
-  Beginning
-  End
-  Playing
 }
 
 enum Wind {
@@ -68,4 +100,13 @@ model Round {
   tileClaimedFrom   String?
   tileClaimedBy     String?
   game              Game?
+}
+
+model Tile {
+  id     Int     @id @default(autoincrement())
+  suit   String?
+  type   String
+  value  String
+  tileId Int
+  deckId String
 }

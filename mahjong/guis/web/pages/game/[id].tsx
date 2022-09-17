@@ -5,9 +5,11 @@ import { v4 as uuid } from "uuid";
 
 import io from "socket.io-client";
 import {
+  SMDrawTilePayload,
   SMGameStartedPayload,
   SMNewPlayerPayload,
   SMPlayersNumPayload,
+  SMSortHandPayload,
   SMStartGamePayload,
   SocketMessage,
 } from "../../lib/socketMessages";
@@ -26,9 +28,7 @@ const Game = () => {
   const [playersNum, setPlayersNum] = useState<number | null>(null);
   const [gameStatus, setGameStatus] = useState<GameStatus>(GameStatus.WAITING);
   const [userId, setUserId] = useState<string | null>(null);
-  const [initGameData, setInitGameData] = useState<SMGameStartedPayload | null>(
-    null
-  );
+  const [playData, setPlayData] = useState<SMGameStartedPayload | null>(null);
 
   const socket = useRef(null);
   const gameId = router.query.id as string;
@@ -72,7 +72,8 @@ const Game = () => {
       socket.current.on(
         SocketMessage.GameStarted,
         (data: SMGameStartedPayload) => {
-          setInitGameData(data);
+          console.log("[id].tsx: data", data);
+          setPlayData(data);
         }
       );
 
@@ -91,22 +92,30 @@ const Game = () => {
         <p>This is the game "{gameId}"</p>
         {playersNum !== null && <p>Connected players: {playersNum} / 4</p>}
         {userId !== null && <p>User: {userId}</p>}
-        {initGameData && (
+        {playData && (
           <div>
             <p>
               You are on index:{" "}
-              {initGameData.players.findIndex((p) => p.id === userId)}
+              {playData.players.findIndex((p) => p.id === userId)}
             </p>
             <div>
-              <p>Your hand:</p>
+              <p>The board:</p>
               <ul>
-                {initGameData.game.hand.map((handTile) => {
-                  const tile = initGameData.deck[handTile.id];
+                {playData.game.board.map((tileId) => {
+                  const tile = playData.deck[tileId];
                   const img = getTileImage(tile);
+
                   return (
-                    <li key={tile.id}>
+                    <li
+                      key={tile.id}
+                      style={{ display: "inline-flex", width: 60 }}
+                    >
                       {img ? (
-                        <img src={img} style={{ maxWidth: 60 }} />
+                        <img
+                          src={img}
+                          style={{ maxWidth: 60 }}
+                          title={JSON.stringify(tile)}
+                        />
                       ) : (
                         JSON.stringify(tile)
                       )}
@@ -114,6 +123,53 @@ const Game = () => {
                   );
                 })}
               </ul>
+            </div>
+            <div>
+              <p>Your hand: ({playData.game.hand.length})</p>
+              <ul>
+                {playData.game.hand.map((handTile) => {
+                  const tile = playData.deck[handTile.id];
+                  const img = getTileImage(tile);
+                  return (
+                    <li
+                      key={tile.id}
+                      style={{ display: "inline-flex", width: 60 }}
+                    >
+                      {img ? (
+                        <img
+                          src={img}
+                          style={{ maxWidth: 60 }}
+                          title={JSON.stringify(tile)}
+                        />
+                      ) : (
+                        JSON.stringify(tile)
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            <div>
+              <button
+                onClick={() => {
+                  const payload: SMDrawTilePayload = { gameId };
+                  socket.current.emit(SocketMessage.DrawTile, payload);
+                }}
+                disabled={
+                  playData.game.round.playerIndex !==
+                  playData.players.findIndex((p) => p.id === userId)
+                }
+              >
+                Draw
+              </button>
+              <button
+                onClick={() => {
+                  const payload: SMSortHandPayload = { gameId };
+                  socket.current.emit(SocketMessage.SortHand, payload);
+                }}
+              >
+                Sort hand
+              </button>
             </div>
           </div>
         )}

@@ -4,6 +4,7 @@ import {
   DragonTile,
   Flower,
   FlowerTile,
+  HandTile,
   Season,
   SeasonTile,
   Suit,
@@ -96,3 +97,26 @@ export const sortTileByValue = (tileA: Tile, tileB: Tile) => {
 
   return tileA.value.toString().localeCompare(tileB.value.toString());
 };
+
+export const getTileSorter =
+  (deck: Deck) => (handTileA: HandTile, handTileB: HandTile) => {
+    const tileA = deck[handTileA.id];
+    const tileB = deck[handTileB.id];
+
+    if (tileA.type === tileB.type) {
+      if (
+        getIsSuitTile(tileA) &&
+        getIsSuitTile(tileB) &&
+        tileA.suit !== tileB.suit
+      ) {
+        return tileA.suit.localeCompare(tileB.suit);
+      }
+
+      return sortTileByValue(tileA, tileB);
+    }
+
+    if (tileA.type === TileType.Suit && tileB.type !== TileType.Suit) return 1;
+    if (tileB.type === TileType.Suit && tileA.type !== TileType.Suit) return -1;
+
+    return tileA.type.localeCompare(tileB.type);
+  };

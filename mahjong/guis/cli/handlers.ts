@@ -9,7 +9,7 @@ import {
   sayMahjong,
 } from "../../src/game";
 import { continueRound } from "../../src/round";
-import { getIsSuitTile, sortTileByValue } from "../../src/tiles";
+import { getTileSorter, sortTileByValue } from "../../src/tiles";
 import {
   createMeld,
   getBoardTilePlayerDiff,
@@ -17,7 +17,7 @@ import {
   getPossibleMelds,
 } from "../../src/melds";
 import { getCurrentPlayer } from "../../src/player";
-import { Game, GamePhase, HandTile, Round, TileType } from "../../src/core";
+import { Game, GamePhase, HandTile, Round } from "../../src/core";
 
 import { formatToEmoji } from "./formatters";
 
@@ -272,29 +272,7 @@ export const handleSortHand = (
 
   hand.sort(
     sort === "suit"
-      ? (handTileA, handTileB) => {
-          const tileA = deck[handTileA.id];
-          const tileB = deck[handTileB.id];
-
-          if (tileA.type === tileB.type) {
-            if (
-              getIsSuitTile(tileA) &&
-              getIsSuitTile(tileB) &&
-              tileA.suit !== tileB.suit
-            ) {
-              return tileA.suit.localeCompare(tileB.suit);
-            }
-
-            return sortTileByValue(tileA, tileB);
-          }
-
-          if (tileA.type === TileType.Suit && tileB.type !== TileType.Suit)
-            return 1;
-          if (tileB.type === TileType.Suit && tileA.type !== TileType.Suit)
-            return -1;
-
-          return tileA.type.localeCompare(tileB.type);
-        }
+      ? getTileSorter(deck)
       : (handTileA, handTileB) => {
           const tileA = deck[handTileA.id];
           const tileB = deck[handTileB.id];

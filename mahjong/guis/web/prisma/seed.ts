@@ -1,12 +1,13 @@
 import { PrismaClient } from "@prisma/client";
+import { v4 as uuid } from "uuid";
 
 import { createGame } from "mahjong/dist/src/game";
-import { createDBGame } from "../lib/db";
+import { createDBGame } from "../lib/api/db";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const game = createGame();
+  const game = createGame({ gameId: uuid() });
 
   console.log(`Start seeding ...`);
 

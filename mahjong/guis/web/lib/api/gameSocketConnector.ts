@@ -1,14 +1,17 @@
 import { Socket } from "socket.io";
-import { createGame } from "mahjong/dist/src/game";
+import { createGame, drawTileFromWall } from "mahjong/dist/src/game";
+import { getTileSorter } from "mahjong/dist/src/tiles";
 import { Game, Player } from "mahjong/dist/src/core";
 
-import { createDBGame, getFullGameFromDB } from "./db";
+import { createDBGame, getFullGameFromDB, saveDBGame } from "./db";
 import { getUIGame } from "./transform";
 import { getServer } from "./socket";
 import {
+  SMDrawTilePayload,
   SMGameStartedPayload,
   SMNewPlayerPayload,
   SMPlayersNumPayload,
+  SMSortHandPayload,
   SMStartGamePayload,
   SocketMessage,
 } from "../socketMessages";
@@ -41,6 +44,8 @@ export const gameSocketConnector = {
     socket.on(
       SocketMessage.NewPlayer,
       async ({ gameId, userId }: SMNewPlayerPayload) => {
+        // @ts-expect-error
+        socket.playerId = userId;
         userIdToSocketIdMap[userId] = socket.id;
 
         gamesPlayers[gameId] = gamesPlayers[gameId] || [];
@@ -48,7 +53,7 @@ export const gameSocketConnector = {
 
         socket.join(gameId);
 
-        if (startedGames[gameId] && gamesPlayers[gameId].length <= 4) {
+        if (startedGames[gameId]) {
           const existingGame = await getFullGameFromDB(gameId);
           updateUserWithGame(userId, existingGame);
         }
@@ -70,6 +75,37 @@ export const gameSocketConnector = {
         });
       }
     );
+
+    socket.on(SocketMessage.DrawTile, async ({ gameId }: SMDrawTilePayload) => {
+      const game = await getFullGameFromDB(gameId);
+      const { drawWall, hands } = game.table;
+      const { round } = game;
+      const playerId = game.players[round.playerIndex].id;
+
+      const tileId = drawTileFromWall({ drawWall, hands, round, playerId });
+
+      const success = typeof tileId === "number";
+
+      if (success) {
+        await saveDBGame(game);
+        await updateUserWithGame(playerId, game);
+      }
+    });
+
+    socket.on(SocketMessage.SortHand, async ({ gameId }: SMSortHandPayload) => {
+      const game = await getFullGameFromDB(gameId);
+      // @ts-expect-error
+      const playerId = socket.playerId as string;
+      const { hands } = game.table;
+      const { deck } = game;
+      const hand = hands[playerId];
+
+      const sorter = getTileSorter(deck);
+      hand.sort(sorter);
+
+      await saveDBGame(game);
+      await updateUserWithGame(playerId, game);
+    });
 
     socket.on(
       SocketMessage.StartGame,

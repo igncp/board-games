@@ -129,6 +129,88 @@ export const createDBGame = async (game: Game) => {
   ]);
 };
 
+export const saveDBGame = async (game: Game) => {
+  const prisma = new PrismaClient();
+
+  const currentGame = await prisma.game.findUnique({
+    where: { id: game.id },
+  });
+
+  const round = await prisma.round.update({
+    where: {
+      id: currentGame.roundId,
+    },
+    data: {
+      dealerPlayerIndex: game.round.dealerPlayerIndex,
+      playerIndex: game.round.playerIndex,
+      type: windMap[game.round.type],
+    },
+  });
+
+  await prisma.game.update({
+    where: {
+      id: game.id,
+    },
+    data: {
+      roundId: round.id,
+      deckId: DEFAULT_DECK_ID,
+      phase: gamePhaseMap[game.phase],
+    },
+  });
+
+  await prisma.hand.deleteMany({
+    where: {
+      gameId: game.id,
+    },
+  });
+
+  await prisma.hand.createMany({
+    data: game.players.reduce((hands, player) => {
+      game.table.hands[player.id].forEach((tile, tileIndex) => {
+        hands.push({
+          concealed: tile.concealed,
+          order: tileIndex,
+          playerId: player.id,
+          setId: tile.setId,
+          tileId: tile.id,
+          gameId: game.id,
+        });
+      });
+      return hands;
+    }, []),
+  });
+
+  await Promise.all([
+    prisma.boardTile.deleteMany({
+      where: {
+        gameId: game.id,
+      },
+    }),
+    prisma.wallTile.deleteMany({
+      where: {
+        gameId: game.id,
+      },
+    }),
+  ]);
+
+  await Promise.all([
+    prisma.boardTile.createMany({
+      data: game.table.board.map((tileId, tileIndex) => ({
+        gameId: game.id,
+        tileId,
+        order: tileIndex,
+      })),
+    }),
+    prisma.wallTile.createMany({
+      data: game.table.drawWall.map((tileId, tileIndex) => ({
+        gameId: game.id,
+        tileId,
+        order: tileIndex,
+      })),
+    }),
+  ]);
+};
+
 export const getFullGameFromDB = async (id: string): Promise<Game | null> => {
   const prisma = new PrismaClient();
 

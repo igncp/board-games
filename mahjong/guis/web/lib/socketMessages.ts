@@ -2,10 +2,12 @@ import { Deck, Game, Player } from "mahjong/dist/src/core";
 import { UIGame } from "./types";
 
 export enum SocketMessage {
+  DrawTile = "drawTile",
+  GameStarted = "gameStarted",
   NewPlayer = "newPlayer",
   PlayersNum = "playersNum",
+  SortHand = "sortHand",
   StartGame = "startGame",
-  GameStarted = "gameStarted",
 }
 
 // From client to server
@@ -16,6 +18,14 @@ export type SMNewPlayerPayload = {
 };
 
 export type SMStartGamePayload = {
+  gameId: Game["id"];
+};
+
+export type SMDrawTilePayload = {
+  gameId: Game["id"];
+};
+
+export type SMSortHandPayload = {
   gameId: Game["id"];
 };
 

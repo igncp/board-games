@@ -143,7 +143,11 @@ export const saveDBGame = async (game: Game) => {
     data: {
       dealerPlayerIndex: game.round.dealerPlayerIndex,
       playerIndex: game.round.playerIndex,
+      tileClaimedBy: game.round.tileClaimed?.by,
+      tileClaimedFrom: game.round.tileClaimed?.from,
+      tileClaimedId: game.round.tileClaimed?.id,
       type: windMap[game.round.type],
+      wallTileDrawn: game.round.wallTileDrawn,
     },
   });
 

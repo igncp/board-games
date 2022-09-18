@@ -1,5 +1,11 @@
 import { Socket } from "socket.io";
-import { createGame, drawTileFromWall } from "mahjong/dist/src/game";
+import {
+  claimTile,
+  createGame,
+  discardTileToBoard,
+  drawTileFromWall,
+} from "mahjong/dist/src/game";
+import { continueRound } from "mahjong/dist/src/round";
 import { getTileSorter } from "mahjong/dist/src/tiles";
 import { Game, Player } from "mahjong/dist/src/core";
 
@@ -7,8 +13,11 @@ import { createDBGame, getFullGameFromDB, saveDBGame } from "./db";
 import { getUIGame } from "./transform";
 import { getServer } from "./socket";
 import {
+  SMClaimBoardTilePayload,
+  SMDiscardTilePayload,
   SMDrawTilePayload,
   SMGameStartedPayload,
+  SMMoveTurnPayload,
   SMNewPlayerPayload,
   SMPlayersNumPayload,
   SMSortHandPayload,
@@ -26,21 +35,25 @@ const getPlayersNumData = (gameId: Game["id"]) => {
   return [SocketMessage.PlayersNum, payload] as const;
 };
 
+const updateUserWithGame = (playerId: Player["id"], game: Game) => {
+  const payload: SMGameStartedPayload = {
+    deck: game.deck,
+    game: getUIGame(game, playerId),
+    playerId: playerId,
+    players: game.players,
+  };
+
+  getServer()
+    .sockets.to(userIdToSocketIdMap[playerId])
+    .emit(SocketMessage.GameStarted, payload);
+};
+
+const updateUsersWithGame = (game: Game) => {
+  game.players.forEach((player) => updateUserWithGame(player.id, game));
+};
+
 export const gameSocketConnector = {
   onConnection: (socket: Socket) => {
-    const updateUserWithGame = (playerId: Player["id"], game: Game) => {
-      const payload: SMGameStartedPayload = {
-        deck: game.deck,
-        game: getUIGame(game, playerId),
-        playerId: playerId,
-        players: game.players,
-      };
-
-      getServer()
-        .sockets.to(userIdToSocketIdMap[playerId])
-        .emit(SocketMessage.GameStarted, payload);
-    };
-
     socket.on(
       SocketMessage.NewPlayer,
       async ({ gameId, userId }: SMNewPlayerPayload) => {
@@ -106,6 +119,73 @@ export const gameSocketConnector = {
       await saveDBGame(game);
       await updateUserWithGame(playerId, game);
     });
+
+    socket.on(
+      SocketMessage.DiscardTile,
+      async ({ gameId, tileId }: SMDiscardTilePayload) => {
+        const game = await getFullGameFromDB(gameId);
+        // @ts-expect-error
+        const playerId = socket.playerId as string;
+
+        const { hands, board } = game.table;
+        const { round } = game;
+
+        if (typeof tileId !== "number") {
+          console.log("No tile was discarded");
+          return;
+        }
+
+        const discardedTileId = discardTileToBoard({
+          board,
+          hands,
+          playerId,
+          round,
+          tileId,
+        });
+
+        if (typeof discardedTileId === "number") {
+          await saveDBGame(game);
+          await updateUserWithGame(playerId, game);
+        }
+      }
+    );
+
+    socket.on(SocketMessage.MoveTurn, async ({ gameId }: SMMoveTurnPayload) => {
+      const game = await getFullGameFromDB(gameId);
+
+      const success = continueRound(
+        game.round,
+        Object.values(game.table.hands)
+      );
+
+      if (success) {
+        await saveDBGame(game);
+        await updateUsersWithGame(game);
+      }
+    });
+
+    socket.on(
+      SocketMessage.ClaimBoardTile,
+      async ({ gameId }: SMClaimBoardTilePayload) => {
+        const game = await getFullGameFromDB(gameId);
+
+        // @ts-expect-error
+        const playerId = socket.playerId as string;
+
+        const {
+          players,
+          round,
+          table: { board, hands },
+        } = game;
+
+        const success = claimTile({ playerId, board, hands, round, players });
+
+        if (success) {
+          await saveDBGame(game);
+          await updateUsersWithGame(game);
+        }
+      }
+    );
 
     socket.on(
       SocketMessage.StartGame,

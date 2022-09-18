@@ -134,11 +134,13 @@ export const claimTile = ({
   board,
   hands,
   playerId,
+  players,
   round,
 }: {
   board: Table["board"];
   hands: Table["hands"];
   playerId: Player["id"];
+  players: Game["players"];
   round: Round;
 }) => {
   const playerHand = hands[playerId];
@@ -150,6 +152,7 @@ export const claimTile = ({
   if (!tile) return null;
 
   round.tileClaimed.by = playerId;
+  round.playerIndex = players.findIndex((p) => p.id === playerId);
 
   playerHand.push({
     concealed: true,

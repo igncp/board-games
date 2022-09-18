@@ -217,11 +217,12 @@ export const handleClaimTile = (input: string, game: Game) => {
   const playerId = game.players[playerIndex].id;
 
   const {
-    table: { board, hands },
+    players,
     round,
+    table: { board, hands },
   } = game;
 
-  const success = claimTile({ playerId, board, hands, round });
+  const success = claimTile({ playerId, board, hands, round, players });
 
   if (success) {
     console.log("Tile claimed");

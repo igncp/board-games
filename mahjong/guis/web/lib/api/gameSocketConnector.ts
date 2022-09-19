@@ -16,8 +16,10 @@ import {
   SMClaimBoardTilePayload,
   SMDiscardTilePayload,
   SMDrawTilePayload,
+  SMGameStartedAdminPayload,
   SMGameStartedPayload,
   SMMoveTurnPayload,
+  SMNewAdminPayload,
   SMNewPlayerPayload,
   SMPlayersNumPayload,
   SMSortHandPayload,
@@ -28,6 +30,7 @@ import {
 const userIdToSocketIdMap: Record<string, string> = {};
 
 const gamesPlayers: Record<string, string[] | undefined> = {};
+const gamesAdmins: Record<string, string[] | undefined> = {};
 const startedGames: Record<string, true | undefined> = {};
 
 const getPlayersNumData = (gameId: Game["id"]) => {
@@ -46,6 +49,16 @@ const updateUserWithGame = (playerId: Player["id"], game: Game) => {
   getServer()
     .sockets.to(userIdToSocketIdMap[playerId])
     .emit(SocketMessage.GameStarted, payload);
+};
+
+const updateAdminsWithGame = (game: Game) => {
+  const payload: SMGameStartedAdminPayload = game;
+
+  gamesAdmins[game.id].forEach((adminSocketId) => {
+    getServer()
+      .sockets.to(adminSocketId)
+      .emit(SocketMessage.GameStartedAdmin, payload);
+  });
 };
 
 const updateUsersWithGame = (game: Game) => {
@@ -88,6 +101,31 @@ export const gameSocketConnector = {
         });
       }
     );
+
+    // This should only work when passing an authenticated
+    socket.on(SocketMessage.NewAdmin, async ({ gameId }: SMNewAdminPayload) => {
+      gamesAdmins[gameId] = gamesAdmins[gameId] || [];
+      gamesAdmins[gameId].push(socket.id);
+
+      socket.join(gameId);
+
+      if (startedGames[gameId]) {
+        const existingGame = await getFullGameFromDB(gameId);
+        updateAdminsWithGame(existingGame);
+      }
+
+      getServer()
+        .sockets.to(gameId)
+        .emit(...getPlayersNumData(gameId));
+
+      socket.on("disconnect", () => {
+        const adminIndex = gamesAdmins[gameId].indexOf(socket.id);
+
+        if (adminIndex !== -1) {
+          gamesAdmins[gameId].splice(adminIndex, 1);
+        }
+      });
+    });
 
     socket.on(SocketMessage.DrawTile, async ({ gameId }: SMDrawTilePayload) => {
       const game = await getFullGameFromDB(gameId);

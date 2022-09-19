@@ -15,8 +15,8 @@ import {
   SMSortHandPayload,
   SMStartGamePayload,
   SocketMessage,
-} from "../../lib/socketMessages";
-import { getTileImage } from "../../lib/images";
+} from "../../../lib/socketMessages";
+import { getTileImage } from "../../../lib/images";
 
 enum GameStatus {
   WAITING = "WAITING",
@@ -100,9 +100,24 @@ const Game = () => {
         {userId !== null && <p>User: {userId}</p>}
         {playData &&
           (() => {
+            const playerIndex = playData.players.findIndex(
+              (p) => p.id === userId
+            );
+
             const isCurrentRoundPlayer =
-              playData.game.round.playerIndex ===
-              playData.players.findIndex((p) => p.id === userId);
+              playData.game.round.playerIndex === playerIndex;
+
+            const getPlayerTableName = (offset) => {
+              const index = (playerIndex + offset) % 4;
+              const name = offset === 0 ? "You" : playData.players[index].name;
+
+              return [
+                index === playData.game.round.playerIndex ? "*" : "",
+                name,
+              ]
+                .filter(Boolean)
+                .join(" ");
+            };
 
             return (
               <div>
@@ -115,6 +130,27 @@ const Game = () => {
                     <b>It is your turn</b>
                   </p>
                 )}
+                <div>
+                  <table style={{ textAlign: "center" }}>
+                    <tbody>
+                      <tr>
+                        <td></td>
+                        <td>{getPlayerTableName(2)}</td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td>{getPlayerTableName(3)}</td>
+                        <td></td>
+                        <td>{getPlayerTableName(1)}</td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td>{getPlayerTableName(0)}</td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
                 <div>
                   <p>The board:</p>
                   <ul>

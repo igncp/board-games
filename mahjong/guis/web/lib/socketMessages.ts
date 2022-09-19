@@ -6,7 +6,9 @@ export enum SocketMessage {
   DiscardTile = "discardTile",
   DrawTile = "drawTile",
   GameStarted = "gameStarted",
+  GameStartedAdmin = "gameStartedAdmin",
   MoveTurn = "moveTurn",
+  NewAdmin = "newAdmin",
   NewPlayer = "newPlayer",
   PlayersNum = "playersNum",
   SortHand = "sortHand",
@@ -45,6 +47,10 @@ export type SMClaimBoardTilePayload = {
   gameId: Game["id"];
 };
 
+export type SMNewAdminPayload = {
+  gameId: Game["id"];
+};
+
 // From server to client
 
 export type SMPlayersNumPayload = {
@@ -57,3 +63,5 @@ export type SMGameStartedPayload = {
   playerId: string;
   players: Game["players"];
 };
+
+export type SMGameStartedAdminPayload = Game;

@@ -8,12 +8,14 @@ import {
 import { continueRound } from "mahjong/dist/src/round";
 import { getTileSorter } from "mahjong/dist/src/tiles";
 import { Game, Player } from "mahjong/dist/src/core";
+import { createMeld } from "mahjong/dist/src/melds";
 
 import { createDBGame, getFullGameFromDB, saveDBGame } from "./db";
 import { getUIGame } from "./transform";
 import { getServer } from "./socket";
 import {
   SMClaimBoardTilePayload,
+  SMCreateMeldPayload,
   SMDiscardTilePayload,
   SMDrawTilePayload,
   SMGameStartedAdminPayload,
@@ -49,12 +51,14 @@ const updateUserWithGame = (playerId: Player["id"], game: Game) => {
   getServer()
     .sockets.to(userIdToSocketIdMap[playerId])
     .emit(SocketMessage.GameStarted, payload);
+
+  updateAdminsWithGame(game);
 };
 
 const updateAdminsWithGame = (game: Game) => {
   const payload: SMGameStartedAdminPayload = game;
 
-  gamesAdmins[game.id].forEach((adminSocketId) => {
+  gamesAdmins[game.id]?.forEach((adminSocketId) => {
     getServer()
       .sockets.to(adminSocketId)
       .emit(SocketMessage.GameStartedAdmin, payload);
@@ -63,6 +67,7 @@ const updateAdminsWithGame = (game: Game) => {
 
 const updateUsersWithGame = (game: Game) => {
   game.players.forEach((player) => updateUserWithGame(player.id, game));
+  updateAdminsWithGame(game);
 };
 
 export const gameSocketConnector = {
@@ -183,7 +188,7 @@ export const gameSocketConnector = {
 
         if (typeof discardedTileId === "number") {
           await saveDBGame(game);
-          await updateUserWithGame(playerId, game);
+          await updateUsersWithGame(game);
         }
       }
     );
@@ -226,6 +231,34 @@ export const gameSocketConnector = {
     );
 
     socket.on(
+      SocketMessage.CreateMeld,
+      async ({ gameId, tilesIds }: SMCreateMeldPayload) => {
+        const game = await getFullGameFromDB(gameId);
+
+        // @ts-expect-error
+        const playerId = socket.playerId as string;
+        const { hands } = game.table;
+        const { round, deck, players } = game;
+        const subHand = hands[playerId].filter((tile) =>
+          tilesIds.includes(tile.id)
+        );
+
+        const success = createMeld({
+          deck,
+          playerId,
+          players,
+          round,
+          subHand,
+        });
+
+        if (success) {
+          await saveDBGame(game);
+          await updateUsersWithGame(game);
+        }
+      }
+    );
+
+    socket.on(
       SocketMessage.StartGame,
       async ({ gameId }: SMStartGamePayload) => {
         if (startedGames[gameId]) return;
@@ -249,9 +282,7 @@ export const gameSocketConnector = {
           return game;
         })();
 
-        game.players.forEach((player) => {
-          updateUserWithGame(player.id, game);
-        });
+        updateUsersWithGame(game);
       }
     );
   },

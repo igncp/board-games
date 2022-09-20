@@ -6,6 +6,7 @@ import { v4 as uuid } from "uuid";
 import io from "socket.io-client";
 import {
   SMClaimBoardTilePayload,
+  SMCreateMeldPayload,
   SMDiscardTilePayload,
   SMDrawTilePayload,
   SMGameStartedPayload,
@@ -95,9 +96,7 @@ const Game = () => {
       </Head>
       <main>
         <h1>Mahjong</h1>
-        <p>This is the game "{gameId}"</p>
         {playersNum !== null && <p>Connected players: {playersNum} / 4</p>}
-        {userId !== null && <p>User: {userId}</p>}
         {playData &&
           (() => {
             const playerIndex = playData.players.findIndex(
@@ -118,6 +117,12 @@ const Game = () => {
                 .filter(Boolean)
                 .join(" ");
             };
+
+            const setIdsSet = playData.game.hand.reduce((set, tile) => {
+              if (tile.setId) set.add(tile.setId);
+              return set;
+            }, new Set<string>());
+            const setIds = Array.from(setIdsSet);
 
             return (
               <div>
@@ -177,44 +182,83 @@ const Game = () => {
                     })}
                   </ul>
                 </div>
-                <div>
+                <div style={{ border: "1px solid black" }}>
                   <p>Your hand: ({playData.game.hand.length})</p>
                   <ul>
-                    {playData.game.hand.map((handTile) => {
-                      const tile = playData.deck[handTile.id];
-                      const img = getTileImage(tile);
-                      return (
-                        <li
-                          key={tile.id}
-                          style={{
-                            display: "inline-flex",
-                            width: 60,
-                            border:
-                              "5px solid " +
-                              (selectedHandTiles[tile.id]
-                                ? "red"
-                                : "transparent"),
-                          }}
-                          onClick={() => {
-                            setSelectedHandTiles({
-                              ...selectedHandTiles,
-                              [tile.id]: !selectedHandTiles[tile.id],
-                            });
-                          }}
-                        >
-                          {img ? (
-                            <img
-                              src={img}
-                              style={{ maxWidth: 60 }}
-                              title={JSON.stringify(tile)}
-                            />
-                          ) : (
-                            JSON.stringify(tile)
-                          )}
-                        </li>
-                      );
-                    })}
+                    {playData.game.hand
+                      .filter((t) => !t.setId)
+                      .map((handTile) => {
+                        const tile = playData.deck[handTile.id];
+                        const img = getTileImage(tile);
+                        return (
+                          <li
+                            key={tile.id}
+                            style={{
+                              display: "inline-flex",
+                              width: 60,
+                              border:
+                                "5px solid " +
+                                (selectedHandTiles[tile.id]
+                                  ? "red"
+                                  : "transparent"),
+                            }}
+                            onClick={() => {
+                              setSelectedHandTiles({
+                                ...selectedHandTiles,
+                                [tile.id]: !selectedHandTiles[tile.id],
+                              });
+                            }}
+                          >
+                            {img ? (
+                              <img
+                                src={img}
+                                style={{ maxWidth: 60 }}
+                                title={JSON.stringify(tile)}
+                              />
+                            ) : (
+                              JSON.stringify(tile)
+                            )}
+                          </li>
+                        );
+                      })}
                   </ul>
+                  {!!setIds.length && <p>Melds:</p>}
+                  {setIds.map((setId) => {
+                    return (
+                      <ul key={setId}>
+                        {playData.game.hand
+                          .filter((t) => t.setId === setId)
+                          .map((handTile) => {
+                            const tile = playData.deck[handTile.id];
+                            const img = getTileImage(tile);
+                            return (
+                              <li
+                                key={tile.id}
+                                style={{
+                                  display: "inline-flex",
+                                  width: 60,
+                                  border:
+                                    "5px solid " +
+                                    (selectedHandTiles[tile.id]
+                                      ? "red"
+                                      : "transparent"),
+                                }}
+                              >
+                                {img ? (
+                                  <img
+                                    src={img}
+                                    style={{ maxWidth: 60 }}
+                                    title={JSON.stringify(tile)}
+                                  />
+                                ) : (
+                                  JSON.stringify(tile)
+                                )}
+                              </li>
+                            );
+                          })}
+                      </ul>
+                    );
+                  })}
                 </div>
                 <div>
                   <button
@@ -275,6 +319,19 @@ const Game = () => {
                     }}
                   >
                     Claim last tile
+                  </button>
+                  <button
+                    disabled={Object.values(selectedHandTiles).length <= 2}
+                    onClick={() => {
+                      setSelectedHandTiles({});
+                      const payload: SMCreateMeldPayload = {
+                        gameId,
+                        tilesIds: Object.keys(selectedHandTiles).map(Number),
+                      };
+                      socket.current.emit(SocketMessage.CreateMeld, payload);
+                    }}
+                  >
+                    Create meld
                   </button>
                 </div>
               </div>

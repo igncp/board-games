@@ -7,6 +7,7 @@ import {
   drawTileFromWall,
   startGame,
   sayMahjong,
+  getPossibleMeldsInGame,
 } from "../../src/game";
 import { continueRound } from "../../src/round";
 import { getTileSorter, sortTileByValue } from "../../src/tiles";
@@ -17,7 +18,7 @@ import {
   getPossibleMelds,
 } from "../../src/melds";
 import { getCurrentPlayer } from "../../src/player";
-import { Game, GamePhase, HandTile, Round } from "../../src/core";
+import { Game, GamePhase, HandTile, Player, Round } from "../../src/core";
 
 import { formatToEmoji } from "./formatters";
 
@@ -326,61 +327,29 @@ export const handleCreateMeld = (input: string, game: Game) => {
 };
 
 export const handlePossibleMelds = (game: Game) => {
-  let hadOneMeld = false;
-  game.players.forEach((player) => {
-    const {
-      deck,
-      round,
-      table: { hands },
-    } = game;
-    const { tileClaimed } = round;
-    const canClaimTile =
-      tileClaimed && tileClaimed.by === null && tileClaimed.from !== player.id;
-    const hand = hands[player.id].concat(
-      canClaimTile
-        ? [
-            {
-              concealed: true,
-              id: tileClaimed.id,
-              setId: null,
-            },
-          ]
-        : []
-    );
+  const gameMelds = getPossibleMeldsInGame(game);
+  const loggedPlayers: Set<Player["id"]> = new Set();
 
-    const boardTilePlayerDiff = getBoardTilePlayerDiff({
-      hand,
-      playerId: player.id,
-      players: game.players,
-      round: canClaimTile
-        ? ({
-            ...round,
-            tileClaimed: { ...round.tileClaimed, by: player.id },
-          } as Round)
-        : round,
+  if (gameMelds.length) {
+    gameMelds.forEach((meld) => {
+      if (!loggedPlayers.has(meld.playerId)) {
+        loggedPlayers.add(meld.playerId);
+        const player = game.players.find(
+          (p) => p.id === meld.playerId
+        ) as Player;
+
+        console.log("");
+        console.log("Player: " + player.name);
+      }
+
+      console.log(
+        "Possible meld: " +
+          meld.tiles.map((tileId) => formatToEmoji(game.deck[tileId])).join(" ")
+      );
     });
 
-    const possibleMelds = getPossibleMelds({
-      boardTilePlayerDiff,
-      deck,
-      hand,
-      round,
-    });
-
-    if (possibleMelds.length) {
-      hadOneMeld = true;
-      console.log("Player: " + player.name);
-      possibleMelds.forEach((meld) => {
-        console.log(
-          "Possible meld: " +
-            meld.map((tileId) => formatToEmoji(deck[tileId])).join(" ")
-        );
-      });
-      console.log("");
-    }
-  });
-
-  if (!hadOneMeld) {
+    console.log("");
+  } else {
     console.log("No possible melds");
   }
 };

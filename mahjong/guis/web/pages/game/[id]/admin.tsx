@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import {
   SMGameStartedAdminPayload,
@@ -7,11 +7,11 @@ import {
   SMPlayersNumPayload,
   SocketMessage,
 } from "../../../lib/socketMessages";
+import { Game, Tile } from "mahjong/dist/src/core";
 import {
-  getBoardTilePlayerDiff,
-  getPossibleMelds,
-} from "mahjong/dist/src/melds";
-import { Round } from "mahjong/dist/src/core";
+  discardTileToBoard,
+  getPossibleMeldsInGame,
+} from "mahjong/dist/src/game";
 import { getTileImage } from "../../../lib/images";
 
 // Temp workaround to handle HMR
@@ -69,80 +69,85 @@ const GameAdmin = () => {
               <div>
                 {(() => {
                   const melds = [];
-                  playData.players.forEach((player) => {
-                    const {
-                      deck,
-                      round,
-                      table: { hands },
-                    } = playData;
-                    const { tileClaimed } = round;
-                    const canClaimTile =
-                      tileClaimed &&
-                      tileClaimed.by === null &&
-                      tileClaimed.from !== player.id;
-                    const hand = hands[player.id].concat(
-                      canClaimTile
-                        ? [
-                            {
-                              concealed: true,
-                              id: tileClaimed.id,
-                              setId: null,
-                            },
-                          ]
-                        : []
-                    );
-
-                    const boardTilePlayerDiff = getBoardTilePlayerDiff({
-                      hand,
-                      playerId: player.id,
-                      players: playData.players,
-                      round: canClaimTile
-                        ? ({
-                            ...round,
-                            tileClaimed: {
-                              ...round.tileClaimed,
-                              by: player.id,
-                            },
-                          } as Round)
-                        : round,
-                    });
-
-                    const possibleMelds = getPossibleMelds({
-                      boardTilePlayerDiff,
-                      deck,
-                      hand,
-                      round,
-                    });
-
-                    if (possibleMelds.length) {
-                      possibleMelds.forEach((meld) => {
-                        melds.push({
-                          playerId: player.id,
-                          tiles: meld.map((tileId) => deck[tileId]),
-                        });
+                  const handlePossibleMelds = (
+                    game: Game,
+                    discardedTile: Tile["id"] | null
+                  ) => {
+                    const gameMelds = getPossibleMeldsInGame(game);
+                    gameMelds.forEach((gameMeld) => {
+                      melds.push({
+                        ...gameMeld,
+                        tiles: gameMeld.tiles.map((tile) => game.deck[tile]),
+                        discardedTile,
                       });
-                    }
-                  });
+                    });
+                  };
+
+                  const playerIndex = playData.players.findIndex(
+                    (player) => playData.table.hands[player.id].length === 14
+                  );
+
+                  if (
+                    playerIndex !== -1 &&
+                    playData.round.playerIndex === playerIndex
+                  ) {
+                    const playerHand = playData.table.hands[
+                      playData.players[playerIndex].id
+                    ].filter((h) => !h.setId);
+
+                    playerHand.forEach((handTile) => {
+                      const gameCopy = JSON.parse(JSON.stringify(playData));
+                      const tile = gameCopy.deck[handTile.id];
+
+                      discardTileToBoard({
+                        board: gameCopy.table.board,
+                        hands: gameCopy.table.hands,
+                        playerId: gameCopy.players[playerIndex].id,
+                        tileId: handTile.id,
+                        round: gameCopy.round,
+                      });
+
+                      handlePossibleMelds(gameCopy, tile.id);
+                    });
+                  }
+
                   return (
                     <div>
                       {melds.map((meld, index) => (
-                        <>
+                        <Fragment key={index}>
                           <div>
                             {
                               playData.players.find(
                                 (p) => p.id === meld.playerId
                               ).name
-                            }
+                            }{" "}
+                            {meld.discardedTile && (
+                              <span>
+                                When discarding the tile:{" "}
+                                {(() => {
+                                  const src = getTileImage(
+                                    playData.deck[meld.discardedTile]
+                                  );
+                                  return (
+                                    <img style={{ maxHeight: 80 }} src={src} />
+                                  );
+                                })()}
+                              </span>
+                            )}
                           </div>
-                          <div key={index}>
+                          <div>
                             {meld.tiles.map((t) => {
                               const src = getTileImage(t);
                               return (
-                                <img style={{ maxHeight: 80 }} src={src} />
+                                <img
+                                  key={t.id}
+                                  style={{ maxHeight: 80 }}
+                                  src={src}
+                                />
                               );
                             })}
                           </div>
-                        </>
+                        </Fragment>
                       ))}
                     </div>
                   );

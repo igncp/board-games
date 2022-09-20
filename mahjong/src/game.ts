@@ -3,7 +3,7 @@
 // https://en.wikipedia.org/wiki/Mahjong_tiles
 
 import { Deck, Game, GamePhase, Player, Round, Table, Tile } from "./core";
-import { getIsPair } from "./melds";
+import { getBoardTilePlayerDiff, getIsPair, getPossibleMelds } from "./melds";
 import { createRound, moveRoundAfterWin } from "./round";
 import { calculateHandScore } from "./score";
 import { getDefaultDeck } from "./tiles";
@@ -196,4 +196,63 @@ export const sayMahjong = (playerId: Player["id"], game: Game) => {
   game.table = createTable(game.deck, game.players);
 
   return true;
+};
+
+export const getPossibleMeldsInGame = (game: Game) => {
+  const melds: Array<{ playerId: Player["id"]; tiles: Tile["id"][] }> = [];
+
+  game.players.forEach((player) => {
+    const {
+      deck,
+      round,
+      table: { hands },
+    } = game;
+    const { tileClaimed } = round;
+    const canClaimTile =
+      tileClaimed && tileClaimed.by === null && tileClaimed.from !== player.id;
+    const hand = hands[player.id].concat(
+      canClaimTile
+        ? [
+            {
+              concealed: true,
+              id: tileClaimed.id,
+              setId: null,
+            },
+          ]
+        : []
+    );
+
+    const boardTilePlayerDiff = getBoardTilePlayerDiff({
+      hand,
+      playerId: player.id,
+      players: game.players,
+      round: canClaimTile
+        ? ({
+            ...round,
+            tileClaimed: {
+              ...round.tileClaimed,
+              by: player.id,
+            },
+          } as Round)
+        : round,
+    });
+
+    const possibleMelds = getPossibleMelds({
+      boardTilePlayerDiff,
+      deck,
+      hand,
+      round,
+    });
+
+    if (possibleMelds.length) {
+      possibleMelds.forEach((tiles) => {
+        melds.push({
+          playerId: player.id,
+          tiles,
+        });
+      });
+    }
+  });
+
+  return melds;
 };

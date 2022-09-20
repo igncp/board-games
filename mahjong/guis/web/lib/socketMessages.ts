@@ -3,6 +3,7 @@ import { UIGame } from "./types";
 
 export enum SocketMessage {
   ClaimBoardTile = "claimBoardTile",
+  CreateMeld = "createMeld",
   DiscardTile = "discardTile",
   DrawTile = "drawTile",
   GameStarted = "gameStarted",
@@ -20,6 +21,11 @@ export enum SocketMessage {
 export type SMNewPlayerPayload = {
   gameId: Game["id"];
   userId: Player["id"];
+};
+
+export type SMCreateMeldPayload = {
+  gameId: Game["id"];
+  tilesIds: Tile["id"][];
 };
 
 export type SMStartGamePayload = {

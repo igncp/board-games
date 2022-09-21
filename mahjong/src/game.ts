@@ -199,7 +199,11 @@ export const sayMahjong = (playerId: Player["id"], game: Game) => {
 };
 
 export const getPossibleMeldsInGame = (game: Game) => {
-  const melds: Array<{ playerId: Player["id"]; tiles: Tile["id"][] }> = [];
+  const melds: Array<{
+    playerId: Player["id"];
+    tiles: Tile["id"][];
+    discardTile: Tile["id"] | null;
+  }> = [];
 
   game.players.forEach((player) => {
     const {
@@ -247,6 +251,7 @@ export const getPossibleMeldsInGame = (game: Game) => {
     if (possibleMelds.length) {
       possibleMelds.forEach((tiles) => {
         melds.push({
+          discardTile: null,
           playerId: player.id,
           tiles,
         });
@@ -255,4 +260,41 @@ export const getPossibleMeldsInGame = (game: Game) => {
   });
 
   return melds;
+};
+
+export const getPossibleMeldsInGameByDiscard = (game: Game) => {
+  const melds = getPossibleMeldsInGame(game);
+
+  const playerIndex = game.players.findIndex(
+    (player) => game.table.hands[player.id].length === 14
+  );
+
+  if (playerIndex === -1 || game.round.playerIndex !== playerIndex) {
+    return melds;
+  }
+
+  const playerHand = game.table.hands[game.players[playerIndex].id].filter(
+    (h) => !h.setId
+  );
+
+  playerHand.forEach((handTile) => {
+    const gameCopy = JSON.parse(JSON.stringify(game));
+
+    discardTileToBoard({
+      board: gameCopy.table.board,
+      hands: gameCopy.table.hands,
+      playerId: gameCopy.players[playerIndex].id,
+      tileId: handTile.id,
+      round: gameCopy.round,
+    });
+
+    const newMelds = getPossibleMeldsInGame(gameCopy);
+
+    newMelds.forEach((meld) => {
+      melds.push({
+        ...meld,
+        discardTile: handTile.id,
+      });
+    });
+  });
 };

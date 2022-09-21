@@ -7,12 +7,8 @@ import {
   SMPlayersNumPayload,
   SocketMessage,
 } from "../../../lib/socketMessages";
-import { Game, Tile } from "mahjong/dist/src/core";
-import {
-  discardTileToBoard,
-  getPossibleMeldsInGame,
-} from "mahjong/dist/src/game";
-import { getTileImage } from "../../../lib/images";
+import { getPossibleMeldsInGameByDiscard } from "mahjong/dist/src/game";
+import Tile from "../../../components/tile";
 
 // Temp workaround to handle HMR
 let connected = false;
@@ -68,52 +64,11 @@ const GameAdmin = () => {
             <div>
               <div>
                 {(() => {
-                  const melds = [];
-                  const handlePossibleMelds = (
-                    game: Game,
-                    discardedTile: Tile["id"] | null
-                  ) => {
-                    const gameMelds = getPossibleMeldsInGame(game);
-                    gameMelds.forEach((gameMeld) => {
-                      melds.push({
-                        ...gameMeld,
-                        tiles: gameMeld.tiles.map((tile) => game.deck[tile]),
-                        discardedTile,
-                      });
-                    });
-                  };
-
-                  const playerIndex = playData.players.findIndex(
-                    (player) => playData.table.hands[player.id].length === 14
-                  );
-
-                  if (
-                    playerIndex !== -1 &&
-                    playData.round.playerIndex === playerIndex
-                  ) {
-                    const playerHand = playData.table.hands[
-                      playData.players[playerIndex].id
-                    ].filter((h) => !h.setId);
-
-                    playerHand.forEach((handTile) => {
-                      const gameCopy = JSON.parse(JSON.stringify(playData));
-                      const tile = gameCopy.deck[handTile.id];
-
-                      discardTileToBoard({
-                        board: gameCopy.table.board,
-                        hands: gameCopy.table.hands,
-                        playerId: gameCopy.players[playerIndex].id,
-                        tileId: handTile.id,
-                        round: gameCopy.round,
-                      });
-
-                      handlePossibleMelds(gameCopy, tile.id);
-                    });
-                  }
+                  const melds = getPossibleMeldsInGameByDiscard(playData);
 
                   return (
                     <div>
-                      {melds.map((meld, index) => (
+                      {melds?.map((meld, index) => (
                         <Fragment key={index}>
                           <div>
                             {
@@ -121,30 +76,18 @@ const GameAdmin = () => {
                                 (p) => p.id === meld.playerId
                               ).name
                             }{" "}
-                            {meld.discardedTile && (
+                            {meld.discardTile && (
                               <span>
                                 When discarding the tile:{" "}
-                                {(() => {
-                                  const src = getTileImage(
-                                    playData.deck[meld.discardedTile]
-                                  );
-                                  return (
-                                    <img style={{ maxHeight: 80 }} src={src} />
-                                  );
-                                })()}
+                                <Tile tile={playData.deck[meld.discardTile]} />
                               </span>
                             )}
                           </div>
                           <div>
                             {meld.tiles.map((t) => {
-                              const src = getTileImage(t);
-                              return (
-                                <img
-                                  key={t.id}
-                                  style={{ maxHeight: 80 }}
-                                  src={src}
-                                />
-                              );
+                              const tile = playData.deck[t];
+
+                              return <Tile tile={tile} key={tile.id} />;
                             })}
                           </div>
                         </Fragment>

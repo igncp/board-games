@@ -17,7 +17,7 @@ import {
   SMStartGamePayload,
   SocketMessage,
 } from "../../../lib/socketMessages";
-import { getTileImage } from "../../../lib/images";
+import Tile from "../../../components/tile";
 
 enum GameStatus {
   WAITING = "WAITING",
@@ -161,22 +161,13 @@ const Game = () => {
                   <ul>
                     {playData.game.board.map((tileId) => {
                       const tile = playData.deck[tileId];
-                      const img = getTileImage(tile);
 
                       return (
                         <li
                           key={tile.id}
                           style={{ display: "inline-flex", width: 60 }}
                         >
-                          {img ? (
-                            <img
-                              src={img}
-                              style={{ maxWidth: 60 }}
-                              title={JSON.stringify(tile)}
-                            />
-                          ) : (
-                            JSON.stringify(tile)
-                          )}
+                          <Tile tile={tile} />
                         </li>
                       );
                     })}
@@ -189,7 +180,6 @@ const Game = () => {
                       .filter((t) => !t.setId)
                       .map((handTile) => {
                         const tile = playData.deck[handTile.id];
-                        const img = getTileImage(tile);
                         return (
                           <li
                             key={tile.id}
@@ -209,15 +199,7 @@ const Game = () => {
                               });
                             }}
                           >
-                            {img ? (
-                              <img
-                                src={img}
-                                style={{ maxWidth: 60 }}
-                                title={JSON.stringify(tile)}
-                              />
-                            ) : (
-                              JSON.stringify(tile)
-                            )}
+                            <Tile tile={tile} />
                           </li>
                         );
                       })}
@@ -230,7 +212,6 @@ const Game = () => {
                           .filter((t) => t.setId === setId)
                           .map((handTile) => {
                             const tile = playData.deck[handTile.id];
-                            const img = getTileImage(tile);
                             return (
                               <li
                                 key={tile.id}
@@ -244,15 +225,7 @@ const Game = () => {
                                       : "transparent"),
                                 }}
                               >
-                                {img ? (
-                                  <img
-                                    src={img}
-                                    style={{ maxWidth: 60 }}
-                                    title={JSON.stringify(tile)}
-                                  />
-                                ) : (
-                                  JSON.stringify(tile)
-                                )}
+                                <Tile tile={tile} />
                               </li>
                             );
                           })}

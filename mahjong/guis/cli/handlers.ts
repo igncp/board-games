@@ -8,17 +8,13 @@ import {
   startGame,
   sayMahjong,
   getPossibleMeldsInGame,
+  getPossibleMeldsInGameByDiscard,
 } from "../../src/game";
 import { continueRound } from "../../src/round";
 import { getTileSorter, sortTileByValue } from "../../src/tiles";
-import {
-  createMeld,
-  getBoardTilePlayerDiff,
-  getHandMelds,
-  getPossibleMelds,
-} from "../../src/melds";
+import { createMeld, getHandMelds } from "../../src/melds";
 import { getCurrentPlayer } from "../../src/player";
-import { Game, GamePhase, HandTile, Player, Round } from "../../src/core";
+import { Game, GamePhase, HandTile, Player } from "../../src/core";
 
 import { formatToEmoji } from "./formatters";
 
@@ -356,36 +352,20 @@ export const handlePossibleMelds = (game: Game) => {
 
 export const handlePossibleMeldsByDiscard = (game: Game) => {
   console.log("Melds without discarding");
-  handlePossibleMelds(game);
+  const melds = getPossibleMeldsInGameByDiscard(game);
 
-  const playerIndex = game.players.findIndex(
-    (player) => game.table.hands[player.id].length === 14
-  );
-
-  if (playerIndex === -1 || game.round.playerIndex !== playerIndex) {
-    console.log("No player can discard a tile");
-    return;
-  }
-
-  const playerHand = game.table.hands[game.players[playerIndex].id].filter(
-    (h) => !h.setId
-  );
-
-  playerHand.forEach((handTile) => {
-    const gameCopy = JSON.parse(JSON.stringify(game));
-    const tile = gameCopy.deck[handTile.id];
+  melds?.forEach((meld) => {
     console.log("");
-    console.log("Melds when discarding: " + formatToEmoji(tile) + "-----");
-
-    discardTileToBoard({
-      board: gameCopy.table.board,
-      hands: gameCopy.table.hands,
-      playerId: gameCopy.players[playerIndex].id,
-      tileId: handTile.id,
-      round: gameCopy.round,
-    });
-
-    handlePossibleMelds(gameCopy);
+    if (meld.discardTile) {
+      console.log(
+        "Meld when discarding: " + formatToEmoji(game.deck[meld.discardTile])
+      );
+    }
+    const player = game.players.find((p) => p.id === meld.playerId) as Player;
+    console.log("Player: " + player.name);
+    console.log(
+      meld.tiles.map((tileId) => formatToEmoji(game.deck[tileId])).join(" ")
+    );
   });
 };
 

@@ -4,6 +4,7 @@ import {
   createGame,
   discardTileToBoard,
   drawTileFromWall,
+  sayMahjong,
 } from "mahjong/dist/src/game";
 import { continueRound } from "mahjong/dist/src/round";
 import { getTileSorter } from "mahjong/dist/src/tiles";
@@ -24,6 +25,7 @@ import {
   SMNewAdminPayload,
   SMNewPlayerPayload,
   SMPlayersNumPayload,
+  SMSayMahjongPayload,
   SMSortHandPayload,
   SMStartGamePayload,
   SocketMessage,
@@ -250,6 +252,23 @@ export const gameSocketConnector = {
           round,
           subHand,
         });
+
+        if (success) {
+          await saveDBGame(game);
+          await updateUsersWithGame(game);
+        }
+      }
+    );
+
+    socket.on(
+      SocketMessage.SayMahjong,
+      async ({ gameId }: SMSayMahjongPayload) => {
+        const game = await getFullGameFromDB(gameId);
+
+        // @ts-expect-error
+        const playerId = socket.playerId as string;
+
+        const success = sayMahjong(playerId, game);
 
         if (success) {
           await saveDBGame(game);

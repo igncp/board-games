@@ -12,6 +12,7 @@ export enum SocketMessage {
   NewAdmin = "newAdmin",
   NewPlayer = "newPlayer",
   PlayersNum = "playersNum",
+  SayMahjong = "sayMahjong",
   SortHand = "sortHand",
   StartGame = "startGame",
 }
@@ -54,6 +55,10 @@ export type SMClaimBoardTilePayload = {
 };
 
 export type SMNewAdminPayload = {
+  gameId: Game["id"];
+};
+
+export type SMSayMahjongPayload = {
   gameId: Game["id"];
 };
 

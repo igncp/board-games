@@ -7,6 +7,7 @@ export const getUIGame = (game: Game, playerId: string): UIGame => {
   return {
     board: game.table.board,
     hand: game.table.hands[playerId],
+    score: game.score,
     id: game.id,
     round: {
       ...game.round,

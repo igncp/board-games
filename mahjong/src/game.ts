@@ -2,7 +2,16 @@
 // http://mahjong.wikidot.com/
 // https://en.wikipedia.org/wiki/Mahjong_tiles
 
-import { Deck, Game, GamePhase, Player, Round, Table, Tile } from "./core";
+import {
+  Deck,
+  Game,
+  GamePhase,
+  HandTile,
+  Player,
+  Round,
+  Table,
+  Tile,
+} from "./core";
 import { getBoardTilePlayerDiff, getIsPair, getPossibleMelds } from "./melds";
 import { createRound, moveRoundAfterWin } from "./round";
 import { calculateHandScore } from "./score";
@@ -167,18 +176,20 @@ export const startGame = (game: Game) => {
   game.phase = GamePhase.Playing;
 };
 
-export const sayMahjong = (playerId: Player["id"], game: Game) => {
-  const playerHand = game.table.hands[playerId];
+const canSayMahjong = (playerHand: HandTile[], deck: Deck) => {
+  if (playerHand.length !== 14) return false;
 
-  if (playerHand.length !== 14) return null;
-
-  const { deck } = game;
   const tilesWithoutMeld = playerHand
     .filter((t) => !t.setId)
     .map((t) => deck[t.id]);
 
-  if (!getIsPair({ hand: tilesWithoutMeld })) return null;
+  return getIsPair({ hand: tilesWithoutMeld });
+};
 
+export const sayMahjong = (playerId: Player["id"], game: Game) => {
+  if (!canSayMahjong(game.table.hands[playerId], game.deck)) return null;
+
+  const { deck } = game;
   const hand = game.table.hands[playerId];
 
   const { round, score } = game;
@@ -212,9 +223,14 @@ export const getPossibleMeldsInGame = (game: Game) => {
       table: { hands },
     } = game;
     const { tileClaimed } = round;
+    const playerHands = hands[player.id];
     const canClaimTile =
-      tileClaimed && tileClaimed.by === null && tileClaimed.from !== player.id;
-    const hand = hands[player.id].concat(
+      tileClaimed &&
+      tileClaimed.by === null &&
+      tileClaimed.from !== player.id &&
+      playerHands.length === 13;
+
+    const hand = playerHands.concat(
       canClaimTile
         ? [
             {
@@ -248,6 +264,14 @@ export const getPossibleMeldsInGame = (game: Game) => {
       round,
     });
 
+    if (canSayMahjong(hand, game.deck)) {
+      melds.push({
+        discardTile: null,
+        playerId: player.id,
+        tiles: hand.filter((t) => !t.setId).map((t) => t.id),
+      });
+    }
+
     if (possibleMelds.length) {
       possibleMelds.forEach((tiles) => {
         melds.push({
@@ -269,9 +293,11 @@ export const getPossibleMeldsInGameByDiscard = (game: Game) => {
     (player) => game.table.hands[player.id].length === 14
   );
 
-  if (playerIndex === -1 || game.round.playerIndex !== playerIndex) {
+  if (playerIndex === -1) {
     return melds;
   }
+
+  const playerId = game.players[playerIndex].id;
 
   const playerHand = game.table.hands[game.players[playerIndex].id].filter(
     (h) => !h.setId
@@ -283,18 +309,22 @@ export const getPossibleMeldsInGameByDiscard = (game: Game) => {
     discardTileToBoard({
       board: gameCopy.table.board,
       hands: gameCopy.table.hands,
-      playerId: gameCopy.players[playerIndex].id,
+      playerId,
       tileId: handTile.id,
       round: gameCopy.round,
     });
 
     const newMelds = getPossibleMeldsInGame(gameCopy);
 
-    newMelds.forEach((meld) => {
-      melds.push({
-        ...meld,
-        discardTile: handTile.id,
+    newMelds
+      .filter((m) => m.playerId !== playerId)
+      .forEach((meld) => {
+        melds.push({
+          ...meld,
+          discardTile: handTile.id,
+        });
       });
-    });
   });
+
+  return melds;
 };

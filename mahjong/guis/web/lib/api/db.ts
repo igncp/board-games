@@ -195,6 +195,11 @@ export const saveDBGame = async (game: Game) => {
         gameId: game.id,
       },
     }),
+    prisma.score.deleteMany({
+      where: {
+        gameId: game.id,
+      },
+    }),
   ]);
 
   await Promise.all([
@@ -210,6 +215,13 @@ export const saveDBGame = async (game: Game) => {
         gameId: game.id,
         tileId,
         order: tileIndex,
+      })),
+    }),
+    prisma.score.createMany({
+      data: game.players.map((player) => ({
+        gameId: game.id,
+        playerId: player.id,
+        score: game.score[player.id],
       })),
     }),
   ]);

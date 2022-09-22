@@ -9,4 +9,5 @@ export type UIGame = {
   hand: HandTile[];
   id: string;
   round: UIRound;
+  score: Game["score"];
 };

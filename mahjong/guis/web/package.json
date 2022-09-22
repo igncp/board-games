@@ -5,6 +5,7 @@
     "dev": "next dev",
     "prisma:format": "prisma format",
     "prisma:seed": "ts-node ./prisma/seed.ts",
+    "db:backup": "sh ./scripts/backup.sh",
     "start": "next start",
     "test": "tsc --noEmit --project ."
   },
@@ -12,6 +13,7 @@
     "@prisma/client": "^4.3.1",
     "@types/react": "^18.0.20",
     "@types/react-dom": "^18.0.6",
+    "hotkeys-js": "^3.10.0",
     "mahjong": "file:../..",
     "next": "12.3.0",
     "prisma": "^4.3.1",

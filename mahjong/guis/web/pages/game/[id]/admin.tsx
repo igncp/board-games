@@ -60,43 +60,43 @@ const GameAdmin = () => {
           <div>Players num: {playersNum}</div>
           <div>Player index: {playData.round.playerIndex}</div>
           <div style={{ border: "1px solid black" }}>
-            <div>Possible melds:</div>
-            <div>
-              <div>
-                {(() => {
-                  const melds = getPossibleMeldsInGameByDiscard(playData);
+            {(() => {
+              const melds = getPossibleMeldsInGameByDiscard(playData);
+              const playerWith14Tiles = playData.players.find(
+                (p) => playData.table.hands[p.id].length === 14
+              );
 
-                  return (
-                    <div>
-                      {melds?.map((meld, index) => (
-                        <Fragment key={index}>
-                          <div>
-                            {
-                              playData.players.find(
-                                (p) => p.id === meld.playerId
-                              ).name
-                            }{" "}
-                            {meld.discardTile && (
-                              <span>
-                                When discarding the tile:{" "}
-                                <Tile tile={playData.deck[meld.discardTile]} />
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            {meld.tiles.map((t) => {
-                              const tile = playData.deck[t];
+              return (
+                <>
+                  <div>{melds.length ? "Possible melds:" : "No melds"}</div>
+                  <div>
+                    {melds?.map((meld, index) => (
+                      <Fragment key={index}>
+                        <div>
+                          {
+                            playData.players.find((p) => p.id === meld.playerId)
+                              .name
+                          }{" "}
+                          {meld.discardTile && (
+                            <span>
+                              when {playerWith14Tiles.name} discards the tile:{" "}
+                              <Tile tile={playData.deck[meld.discardTile]} />
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          {meld.tiles.map((t) => {
+                            const tile = playData.deck[t];
 
-                              return <Tile tile={tile} key={tile.id} />;
-                            })}
-                          </div>
-                        </Fragment>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
+                            return <Tile tile={tile} key={tile.id} />;
+                          })}
+                        </div>
+                      </Fragment>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </>
       )}

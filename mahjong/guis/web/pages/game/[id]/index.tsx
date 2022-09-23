@@ -33,9 +33,15 @@ type ButtonProps = () => {
   onClick: () => void;
   disabled: boolean;
 };
+
 type PropsRef = {
+  getClaimTileProps: ButtonProps;
+  getCreateMeldProps: ButtonProps;
   getDiscardProps: ButtonProps;
   getDrawProps: ButtonProps;
+  getNextTurnProps: ButtonProps;
+  getSayMahjongProps: ButtonProps;
+  getSortHandProps: ButtonProps;
 };
 
 const Game = () => {
@@ -85,11 +91,59 @@ const Game = () => {
       setSelectedHandTiles({});
     },
   });
+
   propsRef.current.getDrawProps = () => ({
     disabled: !getIsCurrentRoundPlayer(),
     onClick: () => {
       const payload: SMDrawTilePayload = { gameId };
       socket.current.emit(SocketMessage.DrawTile, payload);
+    },
+  });
+
+  propsRef.current.getNextTurnProps = () => ({
+    disabled: false,
+    onClick: () => {
+      const payload: SMMoveTurnPayload = { gameId };
+      socket.current.emit(SocketMessage.MoveTurn, payload);
+    },
+  });
+
+  propsRef.current.getClaimTileProps = () => ({
+    disabled: false,
+    onClick: () => {
+      const payload: SMClaimBoardTilePayload = { gameId };
+      socket.current.emit(SocketMessage.ClaimBoardTile, payload);
+    },
+  });
+
+  propsRef.current.getCreateMeldProps = () => ({
+    disabled: Object.values(selectedHandTiles).length <= 2,
+    onClick: () => {
+      setSelectedHandTiles({});
+      const payload: SMCreateMeldPayload = {
+        gameId,
+        tilesIds: Object.keys(selectedHandTiles).map(Number),
+      };
+      socket.current.emit(SocketMessage.CreateMeld, payload);
+    },
+  });
+
+  propsRef.current.getSayMahjongProps = () => ({
+    disabled: playData.game.hand.filter((t) => !t.setId).length !== 2,
+    onClick: () => {
+      setSelectedHandTiles({});
+      const payload: SMSayMahjongPayload = {
+        gameId,
+      };
+      socket.current.emit(SocketMessage.SayMahjong, payload);
+    },
+  });
+
+  propsRef.current.getSortHandProps = () => ({
+    disabled: false,
+    onClick: () => {
+      const payload: SMSortHandPayload = { gameId };
+      socket.current.emit(SocketMessage.SortHand, payload);
     },
   });
 
@@ -105,8 +159,47 @@ const Game = () => {
         drawProps.onClick();
       });
 
+      hotkeys("t", () => {
+        const nextTurnProps = propsRef.current.getNextTurnProps();
+        if (!nextTurnProps.disabled) {
+          nextTurnProps.onClick();
+        }
+      });
+
+      hotkeys("c", () => {
+        const claimTileProps = propsRef.current.getClaimTileProps();
+        if (!claimTileProps.disabled) {
+          claimTileProps.onClick();
+        }
+      });
+
+      hotkeys("m", () => {
+        const sayMahjongProps = propsRef.current.getSayMahjongProps();
+        if (!sayMahjongProps.disabled) {
+          sayMahjongProps.onClick();
+          return;
+        }
+
+        const createMeldProps = propsRef.current.getCreateMeldProps();
+        if (!createMeldProps.disabled) {
+          createMeldProps.onClick();
+        }
+      });
+
+      hotkeys("s", () => {
+        const sortHandProps = propsRef.current.getSortHandProps();
+
+        if (!sortHandProps.disabled) {
+          sortHandProps.onClick();
+        }
+      });
+
       return () => {
+        hotkeys.unbind("c");
         hotkeys.unbind("d");
+        hotkeys.unbind("m");
+        hotkeys.unbind("s");
+        hotkeys.unbind("t");
       };
     }
   }, [playData]);
@@ -173,6 +266,11 @@ const Game = () => {
 
             const discardProps = propsRef.current.getDiscardProps();
             const drawProps = propsRef.current.getDrawProps();
+            const nextTurnProps = propsRef.current.getNextTurnProps();
+            const claimTileProps = propsRef.current.getClaimTileProps();
+            const createMeldProps = propsRef.current.getCreateMeldProps();
+            const sayMahjongProps = propsRef.current.getSayMahjongProps();
+            const sortHandProps = propsRef.current.getSortHandProps();
 
             return (
               <div>
@@ -317,58 +415,34 @@ const Game = () => {
                     Discard
                   </button>
                   <button
-                    onClick={() => {
-                      const payload: SMSortHandPayload = { gameId };
-                      socket.current.emit(SocketMessage.SortHand, payload);
-                    }}
+                    onClick={sortHandProps.onClick}
+                    disabled={sortHandProps.disabled}
                   >
                     Sort hand
                   </button>
                   {isCurrentRoundPlayer && (
                     <button
-                      onClick={() => {
-                        const payload: SMMoveTurnPayload = { gameId };
-                        socket.current.emit(SocketMessage.MoveTurn, payload);
-                      }}
+                      disabled={nextTurnProps.disabled}
+                      onClick={nextTurnProps.onClick}
                     >
                       Move turn
                     </button>
                   )}
                   <button
-                    onClick={() => {
-                      const payload: SMClaimBoardTilePayload = { gameId };
-                      socket.current.emit(
-                        SocketMessage.ClaimBoardTile,
-                        payload
-                      );
-                    }}
+                    onClick={claimTileProps.onClick}
+                    disabled={claimTileProps.disabled}
                   >
                     Claim last tile
                   </button>
                   <button
-                    disabled={Object.values(selectedHandTiles).length <= 2}
-                    onClick={() => {
-                      setSelectedHandTiles({});
-                      const payload: SMCreateMeldPayload = {
-                        gameId,
-                        tilesIds: Object.keys(selectedHandTiles).map(Number),
-                      };
-                      socket.current.emit(SocketMessage.CreateMeld, payload);
-                    }}
+                    disabled={createMeldProps.disabled}
+                    onClick={createMeldProps.onClick}
                   >
                     Create meld
                   </button>
                   <button
-                    disabled={
-                      playData.game.hand.filter((t) => !t.setId).length !== 2
-                    }
-                    onClick={() => {
-                      setSelectedHandTiles({});
-                      const payload: SMSayMahjongPayload = {
-                        gameId,
-                      };
-                      socket.current.emit(SocketMessage.SayMahjong, payload);
-                    }}
+                    disabled={sayMahjongProps.disabled}
+                    onClick={sayMahjongProps.onClick}
                   >
                     Say Mahjong
                   </button>

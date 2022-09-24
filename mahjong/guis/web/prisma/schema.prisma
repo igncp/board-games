@@ -15,6 +15,7 @@ enum GamePhase {
 
 model Game {
   id      String         @id
+  name    String
   deckId  String
   phase   GamePhase
   round   Round          @relation(fields: [roundId], references: [id])

@@ -9,6 +9,7 @@ import {
 } from "../../../lib/socketMessages";
 import { getPossibleMeldsInGameByDiscard } from "mahjong/dist/src/game";
 import Tile from "../../../components/tile";
+import TilesList from "../../../components/tiles-list";
 
 // Temp workaround to handle HMR
 let connected = false;
@@ -59,6 +60,13 @@ const GameAdmin = () => {
         <>
           <div>Players num: {playersNum}</div>
           <div>Player index: {playData.round.playerIndex}</div>
+          <details>
+            <summary>Wall</summary>
+            <TilesList
+              tiles={playData.table.drawWall.slice().reverse()}
+              deck={playData.deck}
+            />
+          </details>
           <div style={{ border: "1px solid black" }}>
             {(() => {
               const melds = getPossibleMeldsInGameByDiscard(playData);

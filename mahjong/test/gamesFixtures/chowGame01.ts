@@ -2,6 +2,7 @@ import { Game, GamePhase, Wind } from "../../src/core";
 import { getDefaultDeck } from "../../src/tiles";
 
 export const chowGame01: Game = {
+  name: "chowGame01",
   id: "c712f0bb-9e1c-4d0b-92ca-341f2817c688",
   score: {
     "6-742c-4a90-9194-8c31e9085ad8": 0,

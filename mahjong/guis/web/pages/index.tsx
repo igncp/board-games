@@ -18,8 +18,9 @@ const Home = () => {
       <main>
         <h1>Mahjong</h1>
         <div>
-          <div>Play a new game</div>
-          <div>Join a specific game</div>
+          <div>
+            <a href="/admin">Admin</a>
+          </div>
           <div style={{ cursor: "pointer" }} onClick={onClick}>
             Create a custom game
           </div>

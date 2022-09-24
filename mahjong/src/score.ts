@@ -2,6 +2,7 @@ import { Player, Round, Score, Deck, HandTile, TileType } from "./core";
 import { getHandMelds, getIsChow, getIsKong, getIsPung } from "./melds";
 import { windsRoundsOrder } from "./round";
 
+// http://mahjongtime.com/scoring-chart.html
 export const calculateHandScore = ({
   deck,
   hand,

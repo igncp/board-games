@@ -117,6 +117,7 @@ export type Table = {
 export type Game = {
   deck: Deck;
   id: string;
+  name: string;
   phase: GamePhase;
   players: Player[];
   round: Round;

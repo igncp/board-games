@@ -20,6 +20,7 @@ import {
 } from "../../../lib/socketMessages";
 import Tile from "../../../components/tile";
 import { useUserId } from "../../../components/hooks/useUserId";
+import TilesList from "../../../components/tiles-list";
 
 enum GameStatus {
   WAITING = "WAITING",
@@ -239,9 +240,12 @@ const Game = () => {
         <title>Mahjong - Game</title>
       </Head>
       <main>
-        <h1>Mahjong</h1>
+        <h1>
+          Mahjong - <a href="/">Home</a>
+        </h1>
         {playersNum !== null && <p>Connected players: {playersNum} / 4</p>}
         {playData &&
+          playData.game.hand &&
           (() => {
             const playerIndex = getPlayerIndex();
             const isCurrentRoundPlayer = getIsCurrentRoundPlayer();
@@ -314,20 +318,53 @@ const Game = () => {
                 </div>
                 <div>
                   <p>The board:</p>
-                  <ul>
-                    {playData.game.board.map((tileId) => {
-                      const tile = playData.deck[tileId];
-
-                      return (
-                        <li
-                          key={tile.id}
-                          style={{ display: "inline-flex", width: 60 }}
-                        >
-                          <Tile tile={tile} />
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <TilesList tiles={playData.game.board} deck={playData.deck} />
+                </div>
+                <div>
+                  <button
+                    onClick={drawProps.onClick}
+                    disabled={drawProps.disabled}
+                  >
+                    Draw
+                  </button>
+                  <button
+                    disabled={discardProps.disabled}
+                    onClick={discardProps.onClick}
+                  >
+                    Discard
+                  </button>
+                  <button
+                    onClick={sortHandProps.onClick}
+                    disabled={sortHandProps.disabled}
+                  >
+                    Sort hand
+                  </button>
+                  {isCurrentRoundPlayer && (
+                    <button
+                      disabled={nextTurnProps.disabled}
+                      onClick={nextTurnProps.onClick}
+                    >
+                      Move turn
+                    </button>
+                  )}
+                  <button
+                    onClick={claimTileProps.onClick}
+                    disabled={claimTileProps.disabled}
+                  >
+                    Claim last tile
+                  </button>
+                  <button
+                    disabled={createMeldProps.disabled}
+                    onClick={createMeldProps.onClick}
+                  >
+                    Create meld
+                  </button>
+                  <button
+                    disabled={sayMahjongProps.disabled}
+                    onClick={sayMahjongProps.onClick}
+                  >
+                    Say Mahjong
+                  </button>
                 </div>
                 <div style={{ border: "1px solid black" }}>
                   <p>Your hand: ({playData.game.hand.length})</p>
@@ -400,52 +437,6 @@ const Game = () => {
                       </ul>
                     );
                   })}
-                </div>
-                <div>
-                  <button
-                    onClick={drawProps.onClick}
-                    disabled={drawProps.disabled}
-                  >
-                    Draw
-                  </button>
-                  <button
-                    disabled={discardProps.disabled}
-                    onClick={discardProps.onClick}
-                  >
-                    Discard
-                  </button>
-                  <button
-                    onClick={sortHandProps.onClick}
-                    disabled={sortHandProps.disabled}
-                  >
-                    Sort hand
-                  </button>
-                  {isCurrentRoundPlayer && (
-                    <button
-                      disabled={nextTurnProps.disabled}
-                      onClick={nextTurnProps.onClick}
-                    >
-                      Move turn
-                    </button>
-                  )}
-                  <button
-                    onClick={claimTileProps.onClick}
-                    disabled={claimTileProps.disabled}
-                  >
-                    Claim last tile
-                  </button>
-                  <button
-                    disabled={createMeldProps.disabled}
-                    onClick={createMeldProps.onClick}
-                  >
-                    Create meld
-                  </button>
-                  <button
-                    disabled={sayMahjongProps.disabled}
-                    onClick={sayMahjongProps.onClick}
-                  >
-                    Say Mahjong
-                  </button>
                 </div>
               </div>
             );

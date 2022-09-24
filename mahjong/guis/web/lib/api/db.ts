@@ -10,6 +10,8 @@ import {
   Wind as CoreWind,
 } from "mahjong/dist/src/core";
 
+import { GameSummary } from "../../lib/types";
+
 const DEFAULT_DECK_ID = "default-deck";
 
 const flip = <A extends string, B extends string>(
@@ -77,6 +79,7 @@ export const createDBGame = async (game: Game) => {
   await prisma.game.create({
     data: {
       id: game.id,
+      name: game.name,
       roundId: round.id,
       deckId: DEFAULT_DECK_ID,
       phase: gamePhaseMap[game.phase],
@@ -159,6 +162,7 @@ export const saveDBGame = async (game: Game) => {
       roundId: round.id,
       deckId: DEFAULT_DECK_ID,
       phase: gamePhaseMap[game.phase],
+      name: game.name,
     },
   });
 
@@ -283,6 +287,7 @@ export const getFullGameFromDB = async (id: string): Promise<Game | null> => {
 
   const game: Game = {
     id: dbGame.id,
+    name: dbGame.name,
     score: dbGame.score.reduce((score, scoreEntry) => {
       score[scoreEntry.playerId] = scoreEntry.score;
       return score;
@@ -317,4 +322,57 @@ export const getFullGameFromDB = async (id: string): Promise<Game | null> => {
   };
 
   return game;
+};
+
+export const getGamesSummaries = async (
+  playerId?: string
+): Promise<GameSummary[]> => {
+  const prisma = new PrismaClient();
+
+  const dbGames = (
+    await prisma.game.findMany({
+      include: {
+        board: true,
+        hands: true,
+        players: true,
+        round: true,
+        score: true,
+        wall: true,
+      },
+    })
+  ).filter((game) => {
+    if (!playerId) return true;
+
+    return game.players.some((player) => player.playerId === playerId);
+  });
+
+  const players = (
+    await prisma.player.findMany({
+      where: {
+        id: {
+          in: dbGames.reduce((playerIds, game) => {
+            game.players.forEach((player) => playerIds.push(player.playerId));
+            return playerIds;
+          }, []),
+        },
+      },
+    })
+  ).reduce((playersObj, player) => {
+    playersObj[player.id] = player;
+    return playersObj;
+  }, {});
+
+  return dbGames.map((dbGame) => {
+    return {
+      id: dbGame.id,
+      name: dbGame.name,
+      players: dbGame.players.map((playerInGame) => {
+        const player = players[playerInGame.playerId];
+        return {
+          id: player.id,
+          name: player.name,
+        };
+      }),
+    };
+  });
 };

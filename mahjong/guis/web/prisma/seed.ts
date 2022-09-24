@@ -7,7 +7,7 @@ import { createDBGame } from "../lib/api/db";
 const prisma = new PrismaClient();
 
 async function main() {
-  const game = createGame({ gameId: uuid() });
+  const game = createGame({ gameId: uuid(), name: "Test game" });
 
   console.log(`Start seeding ...`);
 

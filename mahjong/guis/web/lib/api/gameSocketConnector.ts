@@ -290,6 +290,7 @@ export const gameSocketConnector = {
 
           const game = createGame({
             gameId,
+            name: "Game " + gameId,
             players: gamesPlayers[gameId].map((id, idx) => ({
               id,
               name: "Player " + idx,

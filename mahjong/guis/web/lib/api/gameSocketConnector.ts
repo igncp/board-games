@@ -22,12 +22,9 @@ import {
   SMGameStartedAdminPayload,
   SMGameStartedPayload,
   SMMoveTurnPayload,
-  SMNewAdminPayload,
-  SMNewPlayerPayload,
   SMPlayersNumPayload,
   SMSayMahjongPayload,
   SMSortHandPayload,
-  SMStartGamePayload,
   SocketMessage,
 } from "../socketMessages";
 
@@ -74,51 +71,60 @@ const updateUsersWithGame = (game: Game) => {
 
 export const gameSocketConnector = {
   onConnection: (socket: Socket) => {
-    socket.on(
-      SocketMessage.NewPlayer,
-      async ({ gameId, userId }: SMNewPlayerPayload) => {
-        // @ts-expect-error
-        socket.playerId = userId;
-        userIdToSocketIdMap[userId] = socket.id;
+    (async () => {
+      const { gameId, userId, isAdmin } = socket.handshake.query as {
+        gameId: Game["id"];
+        isAdmin: string;
+        userId: Player["id"];
+      };
 
-        gamesPlayers[gameId] = gamesPlayers[gameId] || [];
-        gamesPlayers[gameId].push(userId);
+      socket.join(gameId);
 
-        socket.join(gameId);
-
-        if (startedGames[gameId]) {
-          const existingGame = await getFullGameFromDB(gameId);
-          updateUserWithGame(userId, existingGame);
+      if (isAdmin) {
+        gamesAdmins[gameId] = gamesAdmins[gameId] || [];
+        if (!gamesAdmins[gameId].includes(socket.id)) {
+          gamesAdmins[gameId].push(socket.id);
         }
+
+        try {
+          const existingGame = await getFullGameFromDB(gameId);
+          updateAdminsWithGame(existingGame);
+        } catch {}
 
         getServer()
           .sockets.to(gameId)
           .emit(...getPlayersNumData(gameId));
 
         socket.on("disconnect", () => {
-          const playerIndex = gamesPlayers[gameId].indexOf(userId);
+          const adminIndex = gamesAdmins[gameId].indexOf(socket.id);
 
-          if (playerIndex !== -1) {
-            gamesPlayers[gameId].splice(playerIndex, 1);
+          if (adminIndex !== -1) {
+            gamesAdmins[gameId].splice(adminIndex, 1);
           }
-
-          getServer()
-            .sockets.to(gameId)
-            .emit(...getPlayersNumData(gameId));
         });
+
+        return;
       }
-    );
 
-    // This should only work when passing an authenticated
-    socket.on(SocketMessage.NewAdmin, async ({ gameId }: SMNewAdminPayload) => {
-      gamesAdmins[gameId] = gamesAdmins[gameId] || [];
-      gamesAdmins[gameId].push(socket.id);
+      if (!gameId || !userId) return;
 
-      socket.join(gameId);
+      // @ts-expect-error
+      socket.playerId = userId;
+      userIdToSocketIdMap[userId] = socket.id;
 
-      if (startedGames[gameId]) {
-        const existingGame = await getFullGameFromDB(gameId);
-        updateAdminsWithGame(existingGame);
+      try {
+        const gameFromDB = await getFullGameFromDB(gameId);
+        updateUserWithGame(userId, gameFromDB);
+      } finally {
+        gamesPlayers[gameId] = gamesPlayers[gameId] || [];
+
+        if (!gamesPlayers[gameId].includes(userId)) {
+          gamesPlayers[gameId].push(userId);
+        }
+
+        if (gamesPlayers[gameId].length === 4) {
+          startGame(gameId);
+        }
       }
 
       getServer()
@@ -126,13 +132,17 @@ export const gameSocketConnector = {
         .emit(...getPlayersNumData(gameId));
 
       socket.on("disconnect", () => {
-        const adminIndex = gamesAdmins[gameId].indexOf(socket.id);
+        const playerIndex = gamesPlayers[gameId].indexOf(userId);
 
-        if (adminIndex !== -1) {
-          gamesAdmins[gameId].splice(adminIndex, 1);
+        if (playerIndex !== -1) {
+          gamesPlayers[gameId].splice(playerIndex, 1);
         }
+
+        getServer()
+          .sockets.to(gameId)
+          .emit(...getPlayersNumData(gameId));
       });
-    });
+    })();
 
     socket.on(SocketMessage.DrawTile, async ({ gameId }: SMDrawTilePayload) => {
       const game = await getFullGameFromDB(gameId);
@@ -277,33 +287,30 @@ export const gameSocketConnector = {
       }
     );
 
-    socket.on(
-      SocketMessage.StartGame,
-      async ({ gameId }: SMStartGamePayload) => {
-        if (startedGames[gameId]) return;
+    const startGame = async (gameId: string) => {
+      if (startedGames[gameId]) return;
 
-        startedGames[gameId] = true;
+      startedGames[gameId] = true;
 
-        const game = await (async () => {
-          const existingGame = await getFullGameFromDB(gameId);
-          if (existingGame) return existingGame;
+      const game = await (async () => {
+        const existingGame = await getFullGameFromDB(gameId);
+        if (existingGame) return existingGame;
 
-          const game = createGame({
-            gameId,
-            name: "Game " + gameId,
-            players: gamesPlayers[gameId].map((id, idx) => ({
-              id,
-              name: "Player " + idx,
-            })),
-          });
+        const game = createGame({
+          gameId,
+          name: "Game " + gameId,
+          players: gamesPlayers[gameId].map((id, idx) => ({
+            id,
+            name: "Player " + idx,
+          })),
+        });
 
-          createDBGame(game);
+        createDBGame(game);
 
-          return game;
-        })();
+        return game;
+      })();
 
-        updateUsersWithGame(game);
-      }
-    );
+      updateUsersWithGame(game);
+    };
   },
 };

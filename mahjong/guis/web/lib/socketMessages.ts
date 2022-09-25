@@ -1,4 +1,4 @@
-import { Deck, Game, Player, Tile } from "mahjong/dist/src/core";
+import { Deck, Game, Tile } from "mahjong/dist/src/core";
 import { UIGame } from "./types";
 
 export enum SocketMessage {
@@ -9,28 +9,16 @@ export enum SocketMessage {
   GameStarted = "gameStarted",
   GameStartedAdmin = "gameStartedAdmin",
   MoveTurn = "moveTurn",
-  NewAdmin = "newAdmin",
-  NewPlayer = "newPlayer",
   PlayersNum = "playersNum",
   SayMahjong = "sayMahjong",
   SortHand = "sortHand",
-  StartGame = "startGame",
 }
 
 // From client to server
 
-export type SMNewPlayerPayload = {
-  gameId: Game["id"];
-  userId: Player["id"];
-};
-
 export type SMCreateMeldPayload = {
   gameId: Game["id"];
   tilesIds: Tile["id"][];
-};
-
-export type SMStartGamePayload = {
-  gameId: Game["id"];
 };
 
 export type SMDrawTilePayload = {
@@ -51,10 +39,6 @@ export type SMMoveTurnPayload = {
 };
 
 export type SMClaimBoardTilePayload = {
-  gameId: Game["id"];
-};
-
-export type SMNewAdminPayload = {
   gameId: Game["id"];
 };
 

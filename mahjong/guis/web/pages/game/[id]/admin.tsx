@@ -3,7 +3,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import {
   SMGameStartedAdminPayload,
-  SMNewAdminPayload,
   SMPlayersNumPayload,
   SocketMessage,
 } from "../../../lib/socketMessages";
@@ -31,7 +30,12 @@ const GameAdmin = () => {
       connected = true;
       await fetch("/api/socket");
 
-      socket.current = io();
+      socket.current = io({
+        query: { gameId, isAdmin: true },
+        reconnection: true,
+        reconnectionDelay: 500,
+        reconnectionAttempts: 10,
+      });
 
       socket.current.on(
         SocketMessage.PlayersNum,
@@ -47,9 +51,6 @@ const GameAdmin = () => {
           setPlayData(data);
         }
       );
-
-      const payload: SMNewAdminPayload = { gameId };
-      socket.current.emit(SocketMessage.NewAdmin, payload);
     })();
   }, [gameId]);
 

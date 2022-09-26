@@ -127,6 +127,7 @@ export const chowTilesFixture = [
     })),
     true,
     null,
+    null,
   ],
   [
     Array.from({ length: 3 }).map((_, index) => ({
@@ -136,6 +137,7 @@ export const chowTilesFixture = [
     })),
     true,
     1,
+    1,
   ],
   [
     Array.from({ length: 3 }).map((_, index) => ({
@@ -144,6 +146,7 @@ export const chowTilesFixture = [
       value: index + 1,
     })),
     false,
+    1,
     -1,
   ],
   [
@@ -153,9 +156,10 @@ export const chowTilesFixture = [
       value: 1,
     })),
     false,
+    1,
     null,
   ],
-] as [[Tile, Tile, Tile], boolean, number | null][];
+] as [[Tile, Tile, Tile], boolean, Tile["id"] | null, number | null][];
 
 export const possibleMeldsFixture = [
   [

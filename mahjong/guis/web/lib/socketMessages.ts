@@ -1,7 +1,8 @@
-import { Deck, Game, Tile } from "mahjong/dist/src/core";
+import { Deck, Game, HandTile, Tile } from "mahjong/dist/src/core";
 import { UIGame } from "./types";
 
 export enum SocketMessage {
+  BreakMeld = "breakMeld",
   ClaimBoardTile = "claimBoardTile",
   CreateMeld = "createMeld",
   DiscardTile = "discardTile",
@@ -40,6 +41,11 @@ export type SMMoveTurnPayload = {
 
 export type SMClaimBoardTilePayload = {
   gameId: Game["id"];
+};
+
+export type SMBreakMeldPayload = {
+  gameId: Game["id"];
+  setId: HandTile["setId"];
 };
 
 export type SMSayMahjongPayload = {

@@ -9,12 +9,13 @@ import {
 import { continueRound } from "mahjong/dist/src/round";
 import { getTileSorter } from "mahjong/dist/src/tiles";
 import { Game, Player } from "mahjong/dist/src/core";
-import { createMeld } from "mahjong/dist/src/melds";
+import { breakMeld, createMeld } from "mahjong/dist/src/melds";
 
 import { createDBGame, getFullGameFromDB, saveDBGame } from "./db";
 import { getUIGame } from "./transform";
 import { getServer } from "./socket";
 import {
+  SMBreakMeldPayload,
   SMClaimBoardTilePayload,
   SMCreateMeldPayload,
   SMDiscardTilePayload,
@@ -35,7 +36,9 @@ const gamesAdmins: Record<string, string[] | undefined> = {};
 const startedGames: Record<string, true | undefined> = {};
 
 const getPlayersNumData = (gameId: Game["id"]) => {
-  const payload: SMPlayersNumPayload = { num: gamesPlayers[gameId].length };
+  const payload: SMPlayersNumPayload = {
+    num: gamesPlayers[gameId]?.length || 0,
+  };
   return [SocketMessage.PlayersNum, payload] as const;
 };
 
@@ -174,6 +177,28 @@ export const gameSocketConnector = {
       await saveDBGame(game);
       await updateUserWithGame(playerId, game);
     });
+
+    socket.on(
+      SocketMessage.BreakMeld,
+      async ({ gameId, setId }: SMBreakMeldPayload) => {
+        const game = await getFullGameFromDB(gameId);
+        // @ts-expect-error
+        const playerId = socket.playerId as string;
+
+        const { hands } = game.table;
+
+        const success = breakMeld({
+          hands,
+          playerId,
+          setId,
+        });
+
+        if (success) {
+          await saveDBGame(game);
+          await updateUserWithGame(playerId, game);
+        }
+      }
+    );
 
     socket.on(
       SocketMessage.DiscardTile,

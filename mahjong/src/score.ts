@@ -28,6 +28,7 @@ export const calculateHandScore = ({
       const subHand = (meld || []).map((tile) => tile.id);
       const opts = {
         boardTilePlayerDiff: null,
+        claimedTile: null,
         deck,
         subHand,
       };

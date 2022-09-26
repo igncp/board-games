@@ -6,12 +6,20 @@ import {
   getIsSuitTile,
   sortTileByValue,
 } from "./tiles";
-import { Deck, HandTile, SuitTile, Tile, Player, Round } from "./core";
+import { Deck, HandTile, SuitTile, Tile, Player, Round, Game } from "./core";
 
 type SetCheckOpts = {
   deck: Deck;
   subHand: Tile["id"][];
+  claimedTile: Tile["id"] | null;
   boardTilePlayerDiff: number | null;
+};
+
+export const getTileClaimed = (
+  playerId: Player["id"],
+  tileClaimed: Round["tileClaimed"]
+) => {
+  return tileClaimed?.by === playerId ? tileClaimed?.id || null : null;
 };
 
 // - Pung: http://mahjong.wikidot.com/pung
@@ -54,13 +62,18 @@ export const getIsPung = ({ subHand, deck }: SetCheckOpts) => {
 
 // - Chow: http://mahjong.wikidot.com/chow
 export const getIsChow = ({
-  subHand,
-  deck,
   boardTilePlayerDiff,
+  deck,
+  subHand,
+  claimedTile,
 }: SetCheckOpts) => {
   if (subHand?.length !== 3) return false;
 
-  if (typeof boardTilePlayerDiff === "number" && boardTilePlayerDiff !== 1)
+  if (
+    typeof boardTilePlayerDiff === "number" &&
+    boardTilePlayerDiff !== 1 &&
+    subHand.some((t) => t === claimedTile)
+  )
     return false;
 
   const subHandSorted = subHand.map((h) => deck[h]).sort(sortTileByValue);
@@ -183,6 +196,7 @@ export const createMeld = ({
   const opts = {
     boardTilePlayerDiff,
     deck,
+    claimedTile: getTileClaimed(playerId, round.tileClaimed),
     round,
     subHand: subHand.map((tile) => tile.id),
   };
@@ -238,11 +252,13 @@ export const getHandMelds = ({ hand }: { hand: HandTile[] }) => {
 
 export const getPossibleMelds = ({
   boardTilePlayerDiff,
+  claimedTile,
   deck,
   hand,
   round,
 }: {
   boardTilePlayerDiff: number | null;
+  claimedTile: HandTile["id"] | null;
   deck: Deck;
   hand: HandTile[];
   round: Round;
@@ -273,6 +289,7 @@ export const getPossibleMelds = ({
 
         const opts = {
           boardTilePlayerDiff,
+          claimedTile,
           deck,
           round,
           subHand,
@@ -313,6 +330,29 @@ export const getIsPair = ({ hand }: { hand: Tile[] }) => {
   if (hand[0].value !== hand[1].value) return false;
   if ("suit" in hand[0] && "suit" in hand[1] && hand[0].suit !== hand[1].suit)
     return false;
+
+  return true;
+};
+
+export const breakMeld = ({
+  hands,
+  playerId,
+  setId,
+}: {
+  hands: Game["table"]["hands"];
+  playerId: Player["id"];
+  setId: HandTile["setId"];
+}) => {
+  const hand = hands[playerId];
+  const meldTiles = hand?.filter((h) => h.setId === setId);
+
+  if (!meldTiles?.length) return false;
+
+  if (meldTiles.some((t) => !t.concealed)) return false;
+
+  meldTiles.forEach((t) => {
+    t.setId = null;
+  });
 
   return true;
 };

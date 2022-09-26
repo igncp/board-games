@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import hotkeys from "hotkeys-js";
 
 import {
+  SMBreakMeldPayload,
   SMClaimBoardTilePayload,
   SMCreateMeldPayload,
   SMDiscardTilePayload,
@@ -12,7 +13,7 @@ import {
   SMSortHandPayload,
   SocketMessage,
 } from "../../lib/socketMessages";
-import { Game, Tile } from "mahjong/dist/src/core";
+import { Game, HandTile, Tile } from "mahjong/dist/src/core";
 import { Socket } from "socket.io";
 
 type ButtonProps = () => {
@@ -28,6 +29,7 @@ type PropsRef = {
   getNextTurnProps: ButtonProps;
   getSayMahjongProps: ButtonProps;
   getSortHandProps: ButtonProps;
+  onBreakMeld: (setId: HandTile["setId"]) => void;
   onTileClick: (tileId: Tile["id"]) => void;
 };
 
@@ -148,6 +150,11 @@ export const useGameControls = ({
       ...selectedHandTiles,
       [tileId]: !selectedHandTiles[tileId],
     });
+  };
+
+  propsRef.current.onBreakMeld = (setId: HandTile["setId"]) => {
+    const payload: SMBreakMeldPayload = { gameId, setId };
+    socket.emit(SocketMessage.BreakMeld, payload);
   };
 
   useEffect(() => {

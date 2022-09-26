@@ -12,7 +12,12 @@ import {
   Table,
   Tile,
 } from "./core";
-import { getBoardTilePlayerDiff, getIsPair, getPossibleMelds } from "./melds";
+import {
+  getBoardTilePlayerDiff,
+  getIsPair,
+  getPossibleMelds,
+  getTileClaimed,
+} from "./melds";
 import { createRound, moveRoundAfterWin } from "./round";
 import { calculateHandScore } from "./score";
 import { getDefaultDeck } from "./tiles";
@@ -265,6 +270,7 @@ export const getPossibleMeldsInGame = (game: Game) => {
 
     const possibleMelds = getPossibleMelds({
       boardTilePlayerDiff,
+      claimedTile: getTileClaimed(player.id, round.tileClaimed),
       deck,
       hand,
       round,

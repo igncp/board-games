@@ -268,6 +268,15 @@ const Game = () => {
                         <li style={tileStyle}>
                           {subHand[0].concealed ? "Concealed" : "Visible"}
                         </li>
+                        {subHand[0].concealed && (
+                          <button
+                            onClick={() => {
+                              propsRef.current.onBreakMeld(setId);
+                            }}
+                          >
+                            Remove meld
+                          </button>
+                        )}
                       </ul>
                     );
                   })}

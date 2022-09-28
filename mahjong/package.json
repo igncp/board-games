@@ -9,6 +9,7 @@
     "test": "npm run test:ts && npm run test:jest && npm run test:web",
     "test:jest": "jest --verbose ./test",
     "test:ts": "tsc --noEmit --project .",
+    "postinstall":"npm run build",
     "test:web": "cd guis/web && npm run test"
   },
   "keywords": [],

@@ -2,10 +2,11 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "db:backup": "sh ./scripts/backup.sh",
     "dev": "next dev",
     "prisma:format": "prisma format",
+    "prisma:init-dev": "prisma migrate dev && npm run prisma:seed",
     "prisma:seed": "ts-node ./prisma/seed.ts",
-    "db:backup": "sh ./scripts/backup.sh",
     "start": "next start",
     "test": "tsc --noEmit --project ."
   },
